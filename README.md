@@ -42,11 +42,20 @@
 
 ### 📱 Android 用户
 
-推荐使用专为小米/Android 手机开发的 **原生 App**（开箱即用）：
+推荐使用以下 Android App（开箱即用）：
 
+#### 📲 App 1：锁车提醒（通用版）
 👉 [**下载锁车提醒 App v1.0.0**](https://github.com/Simiely/meituan-bike-reminder/releases/tag/v1.0.0)
-- 安装即用，无需任何配置
-- 前台服务计时，通知栏实时显示倒计时
+- 前台服务计时，通知栏倒计时，到点弹窗提醒
+- 支持自定义时长，带「已锁车」按钮
+- 通用 Android 8+ 设备
+
+#### 📲 App 2：一键骑车（MIUI 专属）👈 新
+👉 [**下载一键骑车 App v1.0.0**](https://github.com/Simiely/meituan-bike-reminder/releases/tag/v1.0.0-onetap)
+- **专为小米 MIUI 设计！** 一个按钮做两件事
+- ⏱ 自动创建 **MIUI 系统 50 分钟倒计时**（小米时钟原生计时，无确认弹窗）
+- 📸 自动打开 **美团扫一扫**（扫码骑车）
+- 极简界面，点击即用
 - 时间到 → 锁屏全屏提醒 +「已锁车」按钮
 - 适配 MIUI / EMUI / OneUI 等主流 ROM
 
@@ -108,5 +117,7 @@
 ├── meituan_lock_reminder.xml        # Tasker 配置文件（可直接导入）
 ├── index.html                       # PWA 倒计时网页
 ├── manifest.json                    # PWA 清单
-└── sw.js                            # Service Worker
+├── sw.js                            # Service Worker
+├── MeiTuanOneTap/                   # 📲 一键骑车 App（MIUI 专属）源码
+└── MeiTuanReminder/                 # 📲 锁车提醒 App（通用版）源码
 ```
