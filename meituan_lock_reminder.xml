@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  美团骑车锁车提醒 — Tasker 配置文件
+  导入方式：Tasker → 长按左下角"主页"图标 → 导入 → 选择此文件
+  
+  功能：打开美团 App 时自动弹出时长选择，倒计时结束后提醒锁车
+-->
+<TaskerData tv="1.6" version="1" dvi="1">
+
+  <!-- ============ 配置文件：美团 App 进入前台时触发 ============ -->
+  <Profile sr="prof5" ve="2">
+    <cdate>1725120000000</cdate>
+    <edate>1725120000000</edate>
+    <flags>0</flags>
+    <id>5</id>
+    <mid0>5</mid0>
+    <nme>美团骑车提醒</nme>
+    <AppSkin sr="con0">
+      <apn>com.sankuai.meituan</apn>
+      <app_br_s>regex</app_br_s>
+      <app_vc_s></app_vc_s>
+      <app_ve_s></app_ve_s>
+    </AppSkin>
+  </Profile>
+
+  <!-- ============ 任务：锁车提醒逻辑 ============ -->
+  <Task sr="task5" ve="2">
+    <cdate>1725120000000</cdate>
+    <edate>1725120000000</edate>
+    <id>5</id>
+    <nme>美团骑车锁车提醒</nme>
+    <pri>100</pri>
+    
+    <!-- 动作 1：弹出菜单让用户选择骑行时长 -->
+    <Action sr="act0" ve="7">
+      <code>548</code>
+      <Str sr="arg0" ve="3">预计骑多久？</Str>
+      <Str sr="arg1" ve="3">15 分钟</Str>
+      <Str sr="arg2" ve="3">15 分钟</Str>
+      <Str sr="arg3" ve="3">20 分钟</Str>
+      <Str sr="arg4" ve="3">30 分钟</Str>
+      <Int sr="arg5" val="1"/>
+      <Int sr="arg6" val="2"/>
+      <Int sr="arg7" val="0"/>
+      <Int sr="arg8" val="0"/>
+    </Action>
+    
+    <!-- 动作 2：保存选择的时长（如"15 分钟"） -->
+    <Action sr="act1" ve="7">
+      <code>43</code>
+      <Str sr="arg0" ve="3">%duration_text</Str>
+      <Str sr="arg1" ve="3">%tap</Str>
+      <Int sr="arg2" val="0"/>
+    </Action>
+    
+    <!-- 动作 3：提取数字部分 -->
+    <Action sr="act2" ve="7">
+      <code>43</code>
+      <Str sr="arg0" ve="3">%duration_num</Str>
+      <Str sr="arg1" ve="3">%duration_text</Str>
+      <Int sr="arg2" val="0"/>
+    </Action>
+    
+    <!-- 动作 4：用变量拆取数字（去掉" 分钟"后缀） -->
+    <Action sr="act3" ve="7">
+      <code>43</code>
+      <Str sr="arg0" ve="3">%duration_num</Str>
+      <Str sr="arg1" ve="3">%duration_num.Replace( 分钟,)</Str>
+      <Int sr="arg2" val="0"/>
+    </Action>
+    
+    <!-- 动作 5：计算结束时间（毫秒时间戳） -->
+    <Action sr="act4" ve="7">
+      <code>43</code>
+      <Str sr="arg0" ve="3">%end_time</Str>
+      <Str sr="arg1" ve="3">%TIMEMS + %duration_num * 60000</Str>
+      <Int sr="arg2" val="1"/>
+    </Action>
+    
+    <!-- 动作 6：显示确认提示 -->
+    <Action sr="act5" ve="7">
+      <code>352</code>
+      <Str sr="arg0" ve="3">✅ 已设置 %duration_text 后提醒锁车</Str>
+      <Int sr="arg1" val="0"/>
+    </Action>
+    
+    <!-- 动作 7：等待到结束时间 -->
+    <Action sr="act6" ve="7">
+      <code>131</code>
+      <Int sr="arg0" val="1"/>
+      <Int sr="arg1" val="1"/>
+      <Int sr="arg2" val="1"/>
+      <Int sr="arg3" val="1"/>
+      <Str sr="arg4" ve="3">%TIMEMS > %end_time</Str>
+    </Action>
+
+    <!-- ======== 循环开始：重复提醒 ======== -->
+    
+    <!-- 动作 8：标签 - 循环起点 -->
+    <Action sr="act7" ve="7">
+      <code>59</code>
+      <Str sr="arg0" ve="3">loop_start</Str>
+    </Action>
+    
+    <!-- 动作 9：发出提醒通知（带操作按钮） -->
+    <Action sr="act8" ve="7">
+      <code>113</code>
+      <Str sr="arg0" ve="3">🚲 美团骑车 — 该锁车了！</Str>
+      <Str sr="arg1" ve="3">请确认是否已锁车 ⏰ 骑行已过 %duration_text</Str>
+      <Str sr="arg2" ve="3">ic_launcher</Str>
+      <Int sr="arg3" val="0"/>
+      <Int sr="arg4" val="1"/>
+      <Int sr="arg5" val="1"/>
+      <Int sr="arg6" val="0"/>
+      <Int sr="arg7" val="2"/>
+      <Int sr="arg8" val="0"/>
+      <Int sr="arg9" val="0"/>
+      <Int sr="arg10" val="1"/>
+    </Action>
+    
+    <!-- 动作 10：设置重复提醒计时（3 分钟后） -->
+    <Action sr="act9" ve="7">
+      <code>43</code>
+      <Str sr="arg0" ve="3">%retry_time</Str>
+      <Str sr="arg1" ve="3">%TIMEMS + 180000</Str>
+      <Int sr="arg2" val="1"/>
+    </Action>
+    
+    <!-- 动作 11：等待 3 分钟 -->
+    <Action sr="act10" ve="7">
+      <code>131</code>
+      <Int sr="arg0" val="1"/>
+      <Int sr="arg1" val="1"/>
+      <Int sr="arg2" val="1"/>
+      <Int sr="arg3" val="1"/>
+      <Str sr="arg4" ve="3">%TIMEMS > %retry_time</Str>
+    </Action>
+    
+    <!-- 动作 12：检查配置文件是否仍启用（用户可能已手动停用） -->
+    <Action sr="act11" ve="7">
+      <code>36</code>
+      <Str sr="arg0" ve="3">%PENABLED ~ *美团骑车提醒*</Str>
+    </Action>
+    
+    <!-- 动作 13：如果配置文件已停用，停止任务 -->
+    <Action sr="act12" ve="7">
+      <code>41</code>
+      <Int sr="arg0" val="0"/>
+      <Int sr="arg1" val="0"/>
+    </Action>
+    
+    <!-- 动作 14：End If -->
+    <Action sr="act13" ve="7">
+      <code>38</code>
+    </Action>
+    
+    <!-- 动作 15：跳回循环起点 -->
+    <Action sr="act14" ve="7">
+      <code>59</code>
+      <Str sr="arg0" ve="3">loop_start</Str>
+    </Action>
+    
+  </Task>
+</TaskerData>
