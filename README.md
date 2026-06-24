@@ -54,7 +54,17 @@
 
 ## 辅助工具
 
-🌐 [PWA 倒计时网页](./index.html) — 在浏览器中打开即可使用的倒计时器，适合手机亮屏场景。
+### 🌐 PWA 倒计时网页
+
+作为轻量补充，提供一个倒计时 PWA，适合手机亮屏场景。
+
+**在线访问（推荐）：** 👉 [https://simiely.github.io/meituan-bike-reminder/](https://simiely.github.io/meituan-bike-reminder/)
+
+**添加到主屏幕（像 App 一样用）：**
+- **iPhone Safari**：打开链接 → 底部"分享"按钮 → **添加到主屏幕**
+- **Android Chrome**：打开链接 → 右上角菜单 → **添加到主屏幕**
+
+> ⚠️ **注意**：PWA 需要保持浏览器页面打开才能计时，关闭浏览器后计时停止。适合骑行时手机亮屏放在车篮的场景，或配合系统自动化方案一起使用。
 
 ---
 
