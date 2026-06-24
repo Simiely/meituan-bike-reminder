@@ -42,13 +42,15 @@
 
 ### 📱 Android 用户
 
-👉 [Android Tasker 配置指南](./android_tasker_guide.md)
+推荐使用专为小米/Android 手机开发的 **原生 App**（开箱即用）：
 
-核心步骤：
-1. 安装 Tasker（Google Play 购买）
-2. 导入 `meituan_lock_reminder.xml` 配置文件
-3. 设置电池优化白名单（防止被系统杀掉）
-4. 启用配置文件
+👉 [**下载锁车提醒 App v1.0.0**](https://github.com/Simiely/meituan-bike-reminder/releases/tag/v1.0.0)
+- 安装即用，无需任何配置
+- 前台服务计时，通知栏实时显示倒计时
+- 时间到 → 锁屏全屏提醒 +「已锁车」按钮
+- 适配 MIUI / EMUI / OneUI 等主流 ROM
+
+> 进阶用户也可以参考 [Android Tasker 配置指南](./android_tasker_guide.md)，使用 Tasker 自动化方案。
 
 ---
 
