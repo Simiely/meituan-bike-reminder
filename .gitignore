@@ -1,0 +1,33 @@
+# Android 构建产物
+*.apk
+*.aab
+*.ap_
+*.dex
+bin/
+gen/
+out/
+
+# Android Studio / Gradle
+app/build/
+build/
+.gradle/
+local.properties
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python / 临时文件
+__pycache__/
+*.pyc
+*.pyo
+*~
