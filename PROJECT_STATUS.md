@@ -27,11 +27,11 @@
 ### 项目路径
 - 工作目录：`/workspace/`
 - App 源码：`/tmp/meituan-bike-reminder/MeiTuanOneTap/`
-- 输出 APK：`/workspace/meituan-bike-reminder-v2.4.0.apk`
+- 输出 APK：`/workspace/meituan-bike-reminder-v2.6.0.apk`
 
 ### 当前版本号
-- `versionCode = 240`
-- `versionName = "2.4.0"`
+- `versionCode = 260`
+- `versionName = "2.6.0"`
 - 文件：`MeiTuanOneTap/app/build.gradle.kts`
 
 ### 包名
@@ -42,7 +42,7 @@
 |---|---|
 | `MeiTuanOneTap/app/src/main/java/com/meituan/onetap/MainActivity.kt` | 主逻辑 |
 | `MeiTuanOneTap/app/src/main/AndroidManifest.xml` | Manifest（含 `<queries>` 声明） |
-| `MeiTuanOneTap/app/src/main/res/values/strings.xml` | App 名称：「**一键骑车**」 |
+| `MeiTuanOneTap/app/src/main/res/values/strings.xml` | App 名称：「**扫完记得还**」 |
 | `MeiTuanOneTap/app/src/main/res/values/colors.xml` | 当前配色：玫瑰粉色系 |
 | `MeiTuanOneTap/app/src/main/res/layout/activity_main.xml` | 首页布局 |
 
