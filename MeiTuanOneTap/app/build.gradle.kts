@@ -11,8 +11,8 @@ android {
         applicationId = "com.meituan.onetap"
         minSdk = 26
         targetSdk = 34
-        versionCode = 260
-        versionName = "2.6.0"
+        versionCode = 270
+        versionName = "2.7.0"
     }
 
     applicationVariants.all {
