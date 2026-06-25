@@ -14,7 +14,7 @@
 ├── project-assets/                 # 项目资产目录（源码备份）
 └── MeiTuanOneTap/                 # Android App 源码
     ├── app/
-    │   ├── build.gradle.kts       # versionCode=230, versionName="2.3.0"
+    │   ├── build.gradle.kts       # versionCode=240, versionName="2.4.0"
     │   ├── proguard-rules.pro     # 混淆规则
     │   └── src/main/
     │       ├── AndroidManifest.xml # <queries> 声明，权限
@@ -77,6 +77,20 @@ App 启动
 ---
 
 ## 开发日志
+
+### v2.4.0 — 图标与配色更新 + 签名优化
+
+**日期：** 2025-07
+
+**变更内容：**
+- 替换App图标为用户提供的液态玻璃风格图标（1920×1920px）
+- 生成Android标准各分辨率mipmap资源（mdpi ~ xxxhdpi）
+- 更新自适应图标XML（Android 8+）指向新图标
+- 配色从橙红色系（`#FF6D00`）调整为玫瑰粉色系（`#E55D6B`），与图标风格一致
+- 生成release签名密钥库，APK使用v2签名方案签名
+- 优化ProGuard保留规则，确保TimerReceiver不被混淆
+
+---
 
 ### v2.3.0 — 首次启动权限优化 + 图标与配色更新
 
@@ -307,7 +321,7 @@ return                // 立即 return，不继续执行
 ```bash
 cd MeiTuanOneTap
 ./gradlew assembleRelease
-# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.3.0.apk
+# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.4.0.apk
 ```
 
 ### 版本号管理
@@ -315,8 +329,8 @@ cd MeiTuanOneTap
 文件：`MeiTuanOneTap/app/build.gradle.kts`
 
 ```kotlin
-versionCode = 230
-versionName = "2.3.0"
+versionCode = 240
+versionName = "2.4.0"
 ```
 
 - `versionCode`：整数，每次递增
