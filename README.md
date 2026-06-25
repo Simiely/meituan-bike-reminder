@@ -13,7 +13,7 @@
 
 ## 下载
 
-> 📦 最新版本：**v2.7.0**
+> 📦 最新版本：**v2.7.1**
 >
 > 👉 [下载 APK](https://github.com/Simiely/meituan-bike-reminder/releases)
 
@@ -48,6 +48,29 @@ A：针对 HyperOS 3 优化，其他 Android 7.0+ 设备理论上兼容。
 ## 📦 开发文档
 
 [DEVELOPMENT.md](./DEVELOPMENT.md) — 技术架构、版本日志、踩坑记录。
+
+---
+
+## 🔧 从源码构建
+
+```bash
+# 前置条件：JDK 17+、Android SDK（platform 34 + build-tools）
+
+# 1. 克隆
+git clone https://github.com/Simiely/meituan-bike-reminder.git
+cd meituan-bike-reminder
+
+# 2. 设置 local.properties（指向本地 Android SDK）
+echo "sdk.dir=/path/to/Android/Sdk" > MeiTuanOneTap/local.properties
+
+# 3. 构建 Release APK
+cd MeiTuanOneTap
+./gradlew assembleRelease
+
+# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.7.1.apk
+```
+
+项目所需全部文件（源码、资源、签名证书、Gradle Wrapper）均已提交，clone 后按上述步骤即可复现构建。详见 [DEVELOPMENT.md](./DEVELOPMENT.md)。
 
 ---
 
