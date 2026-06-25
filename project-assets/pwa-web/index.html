@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#FFC107">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="锁车提醒">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚲</text></svg>">
+  <title>美团骑车 · 锁车提醒</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 32px 24px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      margin: 20px auto;
+    }
+
+    .header {
+      margin-bottom: 24px;
+    }
+
+    .header .icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #eee;
+      margin: 20px 0;
+    }
+
+    /* Timer Display */
+    .timer-display {
+      font-size: 64px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 2px;
+      color: #333;
+      margin: 16px 0 8px;
+      font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+    }
+
+    .timer-display.idle {
+      color: #aaa;
+    }
+
+    .timer-display.running {
+      color: #764ba2;
+    }
+
+    .timer-display.ended {
+      color: #e74c3c;
+      animation: pulse 0.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+
+    .timer-label {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    /* Duration Selection */
+    .duration-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .duration-btn {
+      padding: 14px 0;
+      border: 2px solid #e8e8e8;
+      border-radius: 12px;
+      background: #fafafa;
+      font-size: 16px;
+      font-weight: 600;
+      color: #555;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .duration-btn:active {
+      transform: scale(0.95);
+    }
+
+    .duration-btn.selected {
+      border-color: #764ba2;
+      background: #f3eefb;
+      color: #764ba2;
+    }
+
+    .duration-btn:hover:not(.selected) {
+      border-color: #c0b0d8;
+      background: #f8f5fc;
+    }
+
+    /* Custom Input */
+    .custom-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .custom-input-row input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e8e8e8;
+      border-radius: 12px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .custom-input-row input:focus {
+      border-color: #764ba2;
+    }
+
+    .custom-input-row span {
+      font-size: 14px;
+      color: #888;
+      white-space: nowrap;
+    }
+
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .btn-danger {
+      background: #fee;
+      color: #e74c3c;
+    }
+
+    .btn-success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    /* Status Message */
+    .status {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .status.info {
+      background: #e8eaf6;
+      color: #3f51b5;
+    }
+
+    .status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status.warning {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .status.error {
+      background: #fce4ec;
+      color: #c62828;
+    }
+
+    /* History */
+    .history {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #eee;
+    }
+
+    .history h3 {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .history-list {
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 13px;
+      color: #666;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .history-item .time {
+      font-family: monospace;
+      color: #999;
+    }
+
+    .history-item .status-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .history-item .status-badge.reminded {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .history-item .status-badge.locked {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .empty-history {
+      color: #ccc;
+      font-size: 13px;
+      padding: 12px 0;
+    }
+
+    /* Permission Banner */
+    .permission-banner {
+      background: #fff3e0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #e65100;
+      display: none;
+    }
+
+    .permission-banner.show {
+      display: block;
+    }
+
+    .permission-banner button {
+      background: #ff9800;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 20px;
+      font-size: 11px;
+      color: #bbb;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 380px) {
+      .container {
+        padding: 24px 16px;
+        width: 95%;
+      }
+      .timer-display {
+        font-size: 48px;
+      }
+      .duration-btn {
+        font-size: 14px;
+        padding: 12px 0;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(135deg, #2c1654 0%, #1a1a2e 100%);
+      }
+      .container {
+        background: rgba(30, 30, 50, 0.95);
+      }
+      .header h1 { color: #e0e0e0; }
+      .header p { color: #999; }
+      .timer-display { color: #e0e0e0; }
+      .timer-display.running { color: #b388ff; }
+      .timer-display.idle { color: #666; }
+      .duration-btn {
+        background: #2a2a3e;
+        border-color: #3a3a5e;
+        color: #aaa;
+      }
+      .duration-btn.selected {
+        border-color: #b388ff;
+        background: #3a2a5e;
+        color: #b388ff;
+      }
+      .btn-secondary { background: #333; color: #aaa; }
+      .divider { background: #333; }
+      .custom-input-row input {
+        background: #2a2a3e;
+        border-color: #3a3a5e;
+        color: #e0e0e0;
+      }
+      .history { border-top-color: #333; }
+      .history-item { border-bottom-color: #2a2a3e; }
+      .empty-history { color: #555; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" role="main">
+  <!-- Header -->
+  <div class="header">
+    <div class="icon">🚲</div>
+    <h1>美团骑车 · 锁车提醒</h1>
+    <p>设个定时，再也不怕忘锁车</p>
+  </div>
+
+  <!-- Notification Permission Banner -->
+  <div class="permission-banner" id="permissionBanner">
+    🔔 启用通知权限后，倒计时结束时将弹出系统通知提醒
+    <br>
+    <button onclick="requestNotificationPermission()">启用通知</button>
+  </div>
+
+  <!-- Timer -->
+  <div class="timer-label" id="timerLabel">选择时长后开始计时</div>
+  <div class="timer-display idle" id="timerDisplay">--:--</div>
+
+  <!-- Duration Selection -->
+  <div class="duration-grid" id="durationGrid">
+    <button class="duration-btn" data-minutes="10">10 分</button>
+    <button class="duration-btn selected" data-minutes="15">15 分</button>
+    <button class="duration-btn" data-minutes="20">20 分</button>
+    <button class="duration-btn" data-minutes="30">30 分</button>
+    <button class="duration-btn" data-minutes="45">45 分</button>
+    <button class="duration-btn" data-minutes="60">60 分</button>
+  </div>
+
+  <!-- Custom Input -->
+  <div class="custom-input-row">
+    <input type="number" id="customMinutes" min="1" max="999" placeholder="自定义分钟" value="">
+    <span>分钟</span>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions">
+    <button class="btn btn-primary" id="btnStart" onclick="startTimer()">
+      ▶ 开始计时
+    </button>
+    <button class="btn btn-secondary" id="btnPause" onclick="pauseTimer()" style="display:none;">
+      ⏸ 暂停
+    </button>
+    <button class="btn btn-danger" id="btnStop" onclick="stopTimer()" style="display:none;">
+      ✕ 取消
+    </button>
+    <button class="btn btn-success" id="btnLocked" onclick="markLocked()" style="display:none;">
+      ✅ 已锁车
+    </button>
+  </div>
+
+  <!-- Status -->
+  <div class="status" id="status"></div>
+
+  <!-- Divider -->
+  <div class="divider"></div>
+
+  <!-- History -->
+  <div class="history">
+    <h3>📋 本次记录</h3>
+    <div class="history-list" id="historyList">
+      <div class="empty-history">还没有计时记录</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    页面关闭后计时将停止 · 建议配合系统提醒使用
+  </div>
+</div>
+
+<script>
+  // ============ State ============
+  let state = {
+    timerId: null,
+    endTime: null,
+    paused: false,
+    remainingMs: 0,
+    selectedMinutes: 15,
+    isRunning: false,
+    history: []
+  };
+
+  const STORAGE_KEY = 'meituan_reminder_state';
+
+  // ============ DOM refs ============
+  const timerDisplay = document.getElementById('timerDisplay');
+  const timerLabel = document.getElementById('timerLabel');
+  const btnStart = document.getElementById('btnStart');
+  const btnPause = document.getElementById('btnPause');
+  const btnStop = document.getElementById('btnStop');
+  const btnLocked = document.getElementById('btnLocked');
+  const statusEl = document.getElementById('status');
+  const historyList = document.getElementById('historyList');
+  const permissionBanner = document.getElementById('permissionBanner');
+  const customInput = document.getElementById('customMinutes');
+
+  // ============ Duration Selection ============
+  document.querySelectorAll('.duration-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.isRunning) return;
+      document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.selectedMinutes = parseInt(btn.dataset.minutes);
+      customInput.value = '';
+    });
+  });
+
+  customInput.addEventListener('input', () => {
+    if (state.isRunning) return;
+    const val = parseInt(customInput.value);
+    if (val > 0) {
+      document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+      state.selectedMinutes = val;
+    }
+  });
+
+  // ============ Core Functions ============
+  function getDuration() {
+    const val = parseInt(customInput.value);
+    if (val > 0) return val;
+    return state.selectedMinutes;
+  }
+
+  function startTimer() {
+    if (state.isRunning) return;
+
+    if (!('Notification' in window)) {
+      showStatus('本浏览器不支持通知功能', 'warning');
+    } else if (Notification.permission === 'default') {
+      permissionBanner.classList.add('show');
+    }
+
+    const minutes = getDuration();
+    if (minutes <= 0 || minutes > 999) {
+      showStatus('请输入有效的时间（1-999 分钟）', 'error');
+      return;
+    }
+
+    const now = Date.now();
+    state.endTime = now + minutes * 60 * 1000;
+    state.remainingMs = minutes * 60 * 1000;
+    state.isRunning = true;
+    state.paused = false;
+
+    // Update UI
+    btnStart.style.display = 'none';
+    btnPause.style.display = 'block';
+    btnStop.style.display = 'block';
+    btnLocked.style.display = 'block';
+    document.querySelectorAll('.duration-btn').forEach(b => { b.style.pointerEvents = 'none'; });
+    customInput.disabled = true;
+
+    timerLabel.textContent = `⏰ ${minutes} 分钟后提醒锁车`;
+    timerDisplay.className = 'timer-display running';
+
+    showStatus(`✅ 已设置 ${minutes} 分钟后提醒锁车`, 'success');
+    hideStatusAfter(3000);
+
+    // Start countdown
+    if (state.timerId) clearInterval(state.timerId);
+    state.timerId = setInterval(tick, 100);
+    tick();
+
+    // Schedule notification
+    scheduleNotification(minutes);
+
+    // Add to history
+    addHistory(minutes, 'pending');
+  }
+
+  function tick() {
+    if (state.paused) return;
+
+    const now = Date.now();
+    const remaining = Math.max(0, state.endTime - now);
+    state.remainingMs = remaining;
+
+    displayTime(remaining);
+
+    if (remaining <= 0) {
+      clearInterval(state.timerId);
+      state.timerId = null;
+      timerDisplay.className = 'timer-display ended';
+      timerLabel.textContent = '🔔 该锁车了！';
+      showStatus('🔔 时间到！请记得锁车！', 'warning');
+
+      // Update history
+      updateLastHistory('reminded');
+
+      // Try notification
+      sendNotification();
+    }
+  }
+
+  function displayTime(ms) {
+    const totalSeconds = Math.ceil(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  function pauseTimer() {
+    if (!state.isRunning || state.paused) return;
+    state.paused = true;
+    state.remainingMs = Math.max(0, state.endTime - Date.now());
+    clearInterval(state.timerId);
+    state.timerId = null;
+
+    btnPause.textContent = '▶ 继续';
+    btnPause.className = 'btn btn-primary';
+    timerLabel.textContent = '⏸ 已暂停';
+    showStatus('⏸ 计时已暂停', 'info');
+  }
+
+  // Resume button is on the same element as pause
+  // We'll handle this by re-interpreting the button click
+  document.getElementById('btnPause').addEventListener('click', function() {
+    if (!state.isRunning) return;
+    
+    if (state.paused) {
+      // Resume
+      state.paused = false;
+      state.endTime = Date.now() + state.remainingMs;
+      
+      btnPause.textContent = '⏸ 暂停';
+      btnPause.className = 'btn btn-secondary';
+      timerLabel.textContent = '⏰ 计时中';
+      timerDisplay.className = 'timer-display running';
+      
+      state.timerId = setInterval(tick, 100);
+      tick();
+      
+      showStatus('▶ 计时已恢复', 'info');
+      hideStatusAfter(2000);
+    } else {
+      pauseTimer();
+    }
+  });
+
+  function stopTimer() {
+    clearInterval(state.timerId);
+    state.timerId = null;
+    resetUI();
+    showStatus('✕ 已取消提醒', 'error');
+    hideStatusAfter(2000);
+    updateLastHistory('cancelled');
+  }
+
+  function markLocked() {
+    clearInterval(state.timerId);
+    state.timerId = null;
+    resetUI();
+    timerDisplay.className = 'timer-display idle';
+    timerDisplay.textContent = '✅ 已锁车';
+    timerLabel.textContent = '🎉 安全骑行！';
+    showStatus('✅ 已确认锁车，提醒关闭', 'success');
+    updateLastHistory('locked');
+    hideStatusAfter(3000, () => {
+      timerDisplay.textContent = '--:--';
+      timerLabel.textContent = '选择时长后开始计时';
+    });
+  }
+
+  function resetUI() {
+    state.isRunning = false;
+    state.paused = false;
+    state.remainingMs = 0;
+
+    btnStart.style.display = 'block';
+    btnPause.style.display = 'none';
+    btnPause.textContent = '⏸ 暂停';
+    btnPause.className = 'btn btn-secondary';
+    btnStop.style.display = 'none';
+    btnLocked.style.display = 'none';
+    document.querySelectorAll('.duration-btn').forEach(b => { b.style.pointerEvents = 'auto'; });
+    customInput.disabled = false;
+  }
+
+  // ============ Notifications ============
+  function requestNotificationPermission() {
+    if (!('Notification' in window)) return;
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') {
+        permissionBanner.classList.remove('show');
+        showStatus('✅ 通知权限已开启', 'success');
+        hideStatusAfter(2000);
+      }
+    });
+  }
+
+  function scheduleNotification(minutes) {
+    // This is a best-effort approach — on iOS, the page must stay open
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      // The notification will be sent from the tick function when time's up
+    }
+  }
+
+  function sendNotification() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    try {
+      const n = new Notification('🚲 美团骑车 — 该锁车了！', {
+        body: '请记得锁车！骑行计时已结束 ⏰',
+        icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚲</text></svg>',
+        tag: 'meituan-reminder',
+        requireInteraction: true,
+        vibrate: [200, 100, 200]
+      });
+
+      n.onclick = () => {
+        window.focus();
+        n.close();
+      };
+    } catch (e) {
+      console.log('Notification failed:', e);
+    }
+  }
+
+  // ============ Status ============
+  function showStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = `status show ${type}`;
+  }
+
+  function hideStatusAfter(ms, callback) {
+    setTimeout(() => {
+      statusEl.className = 'status';
+      if (callback) callback();
+    }, ms);
+  }
+
+  // ============ History ============
+  function addHistory(minutes, status) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    state.history.unshift({
+      time: timeStr,
+      duration: minutes,
+      status: status
+    });
+    // Keep max 10 entries
+    if (state.history.length > 10) state.history.pop();
+    renderHistory();
+  }
+
+  function updateLastHistory(status) {
+    if (state.history.length > 0) {
+      state.history[0].status = status;
+      renderHistory();
+    }
+  }
+
+  function renderHistory() {
+    if (state.history.length === 0) {
+      historyList.innerHTML = '<div class="empty-history">还没有计时记录</div>';
+      return;
+    }
+
+    const statusMap = {
+      'pending': '<span class="status-badge" style="background:#e8eaf6;color:#3f51b5;">⏳ 进行中</span>',
+      'reminded': '<span class="status-badge reminded">🔔 已提醒</span>',
+      'locked': '<span class="status-badge locked">✅ 已锁车</span>',
+      'cancelled': '<span class="status-badge" style="background:#f5f5f5;color:#999;">✕ 已取消</span>'
+    };
+
+    historyList.innerHTML = state.history.map(h => `
+      <div class="history-item">
+        <span class="time">${h.time}</span>
+        <span>${h.duration} 分钟</span>
+        ${statusMap[h.status] || ''}
+      </div>
+    `).join('');
+  }
+
+  // ============ Service Worker Registration ============
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(err => console.log('SW registration failed:', err));
+  }
+
+  // ============ Check notification permission on load ============
+  if ('Notification' in window && Notification.permission === 'default') {
+    permissionBanner.classList.add('show');
+  }
+
+  // ============ Init ============
+  renderHistory();
+</script>
+
+</body>
+</html>

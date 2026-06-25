@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">倒计时 扫车</string>
+    <string name="start_riding">开始骑车</string>
+    <string name="timer_desc">50 分钟倒计时</string>
+    <string name="scan_desc">打开美团扫一扫</string>
+    <string name="timer_started">⏱ MIUI 计时器已启动</string>
+    <string name="scan_opened">📸 美团扫一扫已打开</string>
+    <string name="meituan_not_found">未安装美团 App，请先下载</string>
+</resources>

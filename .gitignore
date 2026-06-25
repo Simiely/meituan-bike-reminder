@@ -31,3 +31,6 @@ __pycache__/
 *.pyc
 *.pyo
 *~
+
+# project-assets（允许提交 APK）
+!project-assets/archive/*.apk
