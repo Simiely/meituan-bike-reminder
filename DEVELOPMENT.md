@@ -54,6 +54,10 @@ imeituan://platformapi/startapp         ← 平台入口兜底
 
 ## 关键版本日志
 
+### v2.7.1 — 按钮位置调整
+
+按钮下移避免贴顶，底部开源信息位置不变。
+
 ### v2.7.0 — 首页底部增加开源信息
 
 首页内容上移，底部增加两行文字：
@@ -121,18 +125,28 @@ Android 11 引入包可见性限制，`resolveActivity()` 返回 null，导致 `
 
 ---
 
+## 前置条件
+
+- JDK 17+
+- Android SDK（platform 34 + build-tools）
+- 克隆项目后创建 `local.properties`：
+
+```bash
+echo "sdk.dir=/path/to/Android/Sdk" > MeiTuanOneTap/local.properties
+```
+
 ## 构建
 
 ```bash
 cd MeiTuanOneTap
 ./gradlew assembleRelease
-# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.6.0.apk
+# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.7.1.apk
 ```
 
 版本号在 `MeiTuanOneTap/app/build.gradle.kts`：
 ```kotlin
-versionCode = 260
-versionName = "2.6.0"
+versionCode = 271
+versionName = "2.7.1"
 ```
 
 ## 发布
@@ -140,3 +154,38 @@ versionName = "2.6.0"
 ```bash
 gh release create vX.Y.Z --title "标题" --notes "说明" path/to/apk
 ```
+
+---
+
+## 项目文件清单
+
+```
+meituan-bike-reminder/
+├── release.keystore              # APK 签名证书
+├── .gitignore
+├── README.md                     # 用户文档
+├── DEVELOPMENT.md                # 开发者文档（本文）
+│
+├── MeiTuanOneTap/                # Android 项目根目录
+│   ├── build.gradle.kts          # 项目级构建配置
+│   ├── settings.gradle.kts       # 模块声明
+│   ├── gradle.properties         # Gradle 属性
+│   ├── gradlew / gradlew.bat     # Gradle Wrapper 脚本
+│   ├── gradle/wrapper/           # Gradle Wrapper（含 gradle-wrapper.jar）
+│   │
+│   └── app/
+│       ├── build.gradle.kts      # 模块级构建配置（版本号、签名、混淆等）
+│       ├── proguard-rules.pro    # R8/ProGuard 混淆规则
+│       └── src/main/
+│           ├── AndroidManifest.xml
+│           ├── java/com/meituan/onetap/
+│           │   ├── MainActivity.kt      # 主界面 & 核心逻辑
+│           │   └── TimerReceiver.kt     # 倒计时广播接收器
+│           └── res/
+│               ├── drawable/            # 背景等可绘制资源
+│               ├── layout/              # 界面布局 XML
+│               ├── mipmap-*/            # 应用图标（各分辨率）
+│               └── values/              # 颜色、字符串、主题
+```
+
+> clone 后只需 `local.properties` 指向本地 Android SDK，即可 `./gradlew assembleRelease` 一键构建。所有源码、资源、签名证书、Gradle Wrapper 均已包含。
