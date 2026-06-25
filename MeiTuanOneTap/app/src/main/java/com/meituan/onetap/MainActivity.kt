@@ -72,10 +72,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showWelcome() {
-        binding.title.text = "欢迎使用扫完记得还"
-        binding.subtitle.text = "首次使用需要授权打开时钟和美团"
-        binding.action1.text = "点击下方按钮完成初始化"
-        binding.action2.text = "后续打开 App 将自动执行"
+        binding.title.text = "第一次使用"
+        binding.subtitle.text = "点击下方按钮，按提示授予权限"
+        binding.action1.text = "授权后，App 会自动执行"
+        binding.action2.text = "下次点击图标即可自动运行"
         binding.statusText.text = "👆 点击按钮开始"
     }
 
