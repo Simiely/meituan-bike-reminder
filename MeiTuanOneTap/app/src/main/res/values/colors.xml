@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 主色：橙红 — 活力、紧迫感，符合"提醒锁车"主题 -->
-    <color name="primary">#FF6D00</color>
-    <color name="primary_dark">#E65100</color>
-    <!-- 背景：暖白 -->
-    <color name="background">#FFF8F5</color>
+    <!-- 主色：玫瑰粉 — 与图标液态玻璃风格一致 -->
+    <color name="primary">#E55D6B</color>
+    <color name="primary_dark">#C94D5A</color>
+    <!-- 背景：极淡玫瑰白 -->
+    <color name="background">#FFF5F6</color>
     <!-- 卡片表面 -->
     <color name="surface">#FFFFFF</color>
     <!-- 主色上的文字 -->
@@ -15,6 +15,6 @@
     <color name="on_surface">#212121</color>
     <!-- 分割线 -->
     <color name="divider">#EEEEEE</color>
-    <!-- 图标背景（adaptive icon 背景）-->
-    <color name="icon_bg">#FF6D00</color>
+    <!-- 图标背景（与图标主色调匹配）-->
+    <color name="icon_bg">#FE878D</color>
 </resources>
