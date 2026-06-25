@@ -33,7 +33,7 @@
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="一键开始骑车"
+            android:text="扫完记得还"
             android:textSize="22sp"
             android:textColor="@color/primary_dark"
             android:textStyle="bold"
