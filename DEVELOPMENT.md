@@ -14,7 +14,7 @@
 ├── project-assets/                 # 项目资产目录（源码备份）
 └── MeiTuanOneTap/                 # Android App 源码
     ├── app/
-    │   ├── build.gradle.kts       # versionCode=240, versionName="2.4.0"
+    │   ├── build.gradle.kts       # versionCode=250, versionName="2.5.0"
     │   ├── proguard-rules.pro     # 混淆规则
     │   └── src/main/
     │       ├── AndroidManifest.xml # <queries> 声明，权限
@@ -77,6 +77,18 @@ App 启动
 ---
 
 ## 开发日志
+
+### v2.5.0 — 图标方案简化
+
+**日期：** 2025-07
+
+**变更内容：**
+- 彻底移除了 `mipmap-anydpi-v26/` 自适应图标定义
+- 删除 `drawable/transparent.xml` 调试遗留文件
+- 仅保留各分辨率 mipmap PNG 图标（mdpi ~ xxxhdpi）
+- Android 8+ 无自适应图标时直接使用 PNG，解决图标不显示问题
+
+---
 
 ### v2.4.0 — 图标与配色更新 + 签名优化
 
@@ -322,7 +334,7 @@ return                // 立即 return，不继续执行
 ```bash
 cd MeiTuanOneTap
 ./gradlew assembleRelease
-# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.4.0.apk
+# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.5.0.apk
 ```
 
 ### 版本号管理
@@ -330,8 +342,8 @@ cd MeiTuanOneTap
 文件：`MeiTuanOneTap/app/build.gradle.kts`
 
 ```kotlin
-versionCode = 240
-versionName = "2.4.0"
+versionCode = 250
+versionName = "2.5.0"
 ```
 
 - `versionCode`：整数，每次递增
