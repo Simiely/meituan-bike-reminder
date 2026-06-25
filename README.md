@@ -102,14 +102,6 @@
 
 👉 [Android Tasker 配置指南](./android_tasker_guide.md)
 
-### 🌐 PWA 网页倒计时
-
-轻量级在线倒计时器，可添加到手机主屏幕当作 App 使用。
-
-**在线访问：** 👉 [https://simiely.github.io/meituan-bike-reminder/](https://simiely.github.io/meituan-bike-reminder/)
-
-> ⚠️ PWA 需要保持浏览器页面打开才能计时，适合骑行时手机亮屏场景。
-
 ---
 
 ## 开发日志
@@ -375,9 +367,6 @@ App 启动
 ├── DEVELOPMENT.md                     # 详细开发笔记（本文档的扩展版）
 ├── ios_shortcuts_guide.md             # iOS 快捷指令配置指南
 ├── android_tasker_guide.md            # Android Tasker 配置指南
-├── index.html                         # PWA 倒计时网页
-├── manifest.json                      # PWA 清单
-├── sw.js                              # Service Worker
 └── MeiTuanOneTap/                    # Android App 源码
     ├── app/
     │   ├── build.gradle.kts          # versionCode=230, versionName="2.3.0"

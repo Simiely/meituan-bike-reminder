@@ -16,7 +16,6 @@ project-assets/
 ├── android-app/              # Android App 完整源码
 ├── ios-shortcuts/            # iPhone 快捷指令方案文档
 ├── android-tasker/           # Android Tasker 方案文档 + 配置文件
-├── pwa-web/                 # PWA 网页倒计时器源码
 └── archive/                  # 历史构建产物（APK 等）
 ```
 
@@ -97,21 +96,6 @@ cd android-app/MeiTuanOneTap
 
 ---
 
-## 🌐 pwa-web/
-
-**内容：** PWA 网页倒计时器源码
-
-**文件：**
-- `index.html` — 主页面（单文件，含 CSS + JS）
-- `manifest.json` — PWA 清单（可添加到主屏幕）
-- `sw.js` — Service Worker（离线缓存）
-
-**在线访问：** https://simiely.github.io/meituan-bike-reminder/
-
-**适用场景：** 手机亮屏放在车篮，配合系统自动化方案使用。关闭浏览器后计时停止。
-
----
-
 ## 📦 archive/
 
 **内容：** 历史构建产物
@@ -128,7 +112,6 @@ cd android-app/MeiTuanOneTap
 | 资源 | 链接 |
 |---|---|
 | **GitHub 仓库** | https://github.com/Simiely/meituan-bike-reminder |
-| **PWA 在线访问** | https://simiely.github.io/meituan-bike-reminder/ |
 | **GitHub Releases** | https://github.com/Simiely/meituan-bike-reminder/releases |
 
 ---
