@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.meituan.onetap.databinding.ActivityMainBinding
 
 /**
- * 一键骑车 App v2.3
+ * 扫完记得还 App v2.6
  *
  * 首次安装 → 显示引导，手动点击初始化权限
  * 初始化后 → 每次打开自动执行
@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showWelcome() {
-        binding.title.text = "欢迎使用锁车提醒"
+        binding.title.text = "欢迎使用扫完记得还"
         binding.subtitle.text = "首次使用需要授权打开时钟和美团"
         binding.action1.text = "点击下方按钮完成初始化"
         binding.action2.text = "后续打开 App 将自动执行"
@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         if (!prefs.getBoolean(KEY_INITIALIZED, false)) {
             prefs.edit().putBoolean(KEY_INITIALIZED, true).apply()
             // 恢复 UI 文字
-            binding.title.text = "一键开始骑车"
+            binding.title.text = "扫完记得还"
             binding.subtitle.text = "点击后自动执行："
             binding.action1.text = "⏱  创建 50 分钟倒计时"
             binding.action2.text = "📸  打开美团扫一扫"

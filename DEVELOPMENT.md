@@ -14,7 +14,7 @@
 ├── project-assets/                 # 项目资产目录（源码备份）
 └── MeiTuanOneTap/                 # Android App 源码
     ├── app/
-    │   ├── build.gradle.kts       # versionCode=250, versionName="2.5.0"
+    │   ├── build.gradle.kts       # versionCode=260, versionName="2.6.0"
     │   ├── proguard-rules.pro     # 混淆规则
     │   └── src/main/
     │       ├── AndroidManifest.xml # <queries> 声明，权限
@@ -78,7 +78,19 @@ App 启动
 
 ## 开发日志
 
-### v2.5.0 — 图标方案简化
+### v2.6.0 — 更名「扫完记得还」+ 文案优化
+
+**日期：** 2025-07
+
+**变更内容：**
+- App 名称从「一键骑车」正式更名为「扫完记得还」
+- Manifest 改用 `@string/app_name` 引用，避免硬编码
+- 更新所有 UI 文案与 App 名称风格统一
+- 版本号 v2.6.0 → v2.6.0
+
+---
+
+### v2.6.0 — 图标方案简化
 
 **日期：** 2025-07
 
@@ -334,7 +346,7 @@ return                // 立即 return，不继续执行
 ```bash
 cd MeiTuanOneTap
 ./gradlew assembleRelease
-# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.5.0.apk
+# 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.6.0.apk
 ```
 
 ### 版本号管理
