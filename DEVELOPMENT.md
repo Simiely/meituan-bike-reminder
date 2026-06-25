@@ -106,6 +106,10 @@ if (prefs.getBoolean(KEY_INITIALIZED, false)) {
 - 更新自适应图标XML（Android 8+）指向新图标
 - 配色从橙红色系（`#FF6D00`）调整为玫瑰粉色系（`#E55D6B`），与图标风格一致
 
+**签名与构建修复：**
+- 生成release签名密钥库，APK使用v2签名方案签名
+- 优化R8/ProGuard保留规则，确保TimerReceiver不被混淆
+
 ---
 
 ### v2.2.0 — 后台恢复 + 按钮重复执行修复
