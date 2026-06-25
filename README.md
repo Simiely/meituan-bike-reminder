@@ -39,7 +39,7 @@
 
 ### 下载
 
-> 📦 最新版本：**v2.4.0**
+> 📦 最新版本：**v2.5.0**
 >
 > 👉 [前往 Releases 下载 APK](https://github.com/Simiely/meituan-bike-reminder/releases)
 

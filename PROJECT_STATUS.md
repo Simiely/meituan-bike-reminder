@@ -5,7 +5,7 @@
 
 ---
 
-## 当前状态（v2.4.0）
+## 当前状态（v2.5.0）
 
 ### ✅ 已完成
 1. README 已精简，仅保留用户导向内容
@@ -13,7 +13,7 @@
 3. 首页配色已更新：橙红色系 → **玫瑰粉色系**（`primary=#E55D6B`, `background=#FFF5F6`）
 4. **App 图标已替换**为用户提供的液态玻璃风格图标，生成全分辨率 mipmap 资源
 5. 代码已推送到 GitHub main 分支
-6. APK 已构建并签名，发布到 GitHub Releases：**v2.4.0**
+6. APK 已构建并签名，发布到 GitHub Releases：**v2.5.0**
 7. 移除了 PWA / iOS / Tasker 等无关方案
 8. 拆分开发文档至 DEVELOPMENT.md
 
