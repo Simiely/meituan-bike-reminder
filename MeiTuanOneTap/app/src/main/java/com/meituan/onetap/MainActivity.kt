@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 startActivity(skipIntent)
                 timerOk = true
-                scheduleMeituan(500)
+                scheduleMeituan(1000) // 延后 1 秒启动美团，给系统时钟留足切换时间
                 updateStatus(timerOk, false)
                 binding.btnStartRiding.isEnabled = true
                 return
