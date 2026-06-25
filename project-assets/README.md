@@ -14,7 +14,6 @@
 project-assets/
 ├── README.md                  # 本文件（目录说明）
 ├── android-app/              # Android App 完整源码
-├── ios-shortcuts/            # iPhone 快捷指令方案文档
 ├── android-tasker/           # Android Tasker 方案文档 + 配置文件
 └── archive/                  # 历史构建产物（APK 等）
 ```
@@ -28,6 +27,10 @@ project-assets/
 **包名：** `com.meituan.onetap`
 
 **当前版本：** v2.3.0（`versionCode=230`, `versionName="2.3.0"`）
+
+**开发环境：** 针对小米澎湃OS3（HyperOS 3）开发，美团App为当前最新版
+
+**测试环境：** 小米 HyperOS / MIUI
 
 **目录结构：**
 ```
@@ -66,19 +69,6 @@ cd android-app/MeiTuanOneTap
 - 两个 `startActivity()` 需间隔 500ms，否则互相覆盖
 - 美团后台激活需添加 `FLAG_ACTIVITY_CLEAR_TOP`
 - 首次启动用 `SharedPreferences` 区分，避免权限弹窗打断执行
-
----
-
-## 🍎 ios-shortcuts/
-
-**内容：** iPhone 快捷指令配置指南
-
-**文件：**
-- `ios_shortcuts_guide.md` — 详细配置步骤（含截图说明）
-
-**原理：** 利用 iOS 快捷指令的"自动化"功能，在美团 App 打开时自动弹出时长选择，创建系统提醒事项。
-
-**适用：** iOS 17+，无需额外 App，完全免费。
 
 ---
 
