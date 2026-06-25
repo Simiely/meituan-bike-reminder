@@ -14,7 +14,6 @@
 project-assets/
 ├── README.md                  # 本文件（目录说明）
 ├── android-app/              # Android App 完整源码
-├── android-tasker/           # Android Tasker 方案文档 + 配置文件
 └── archive/                  # 历史构建产物（APK 等）
 ```
 
@@ -69,20 +68,6 @@ cd android-app/MeiTuanOneTap
 - 两个 `startActivity()` 需间隔 500ms，否则互相覆盖
 - 美团后台激活需添加 `FLAG_ACTIVITY_CLEAR_TOP`
 - 首次启动用 `SharedPreferences` 区分，避免权限弹窗打断执行
-
----
-
-## 🤖 android-tasker/
-
-**内容：** Android Tasker 自动化方案文档 + 配置文件
-
-**文件：**
-- `android_tasker_guide.md` — Tasker 安装 + 配置导入步骤
-- `meituan_lock_reminder.xml` — Tasker 配置文件（可直接导入）
-
-**原理：** Tasker 监听美团 App 启动事件，自动创建前台服务通知倒计时，每 3 分钟重复提醒，支持"已锁车"按钮取消。
-
-**适用：** Android 8+，需要 Tasker App（付费 ~$3.5）。
 
 ---
 
