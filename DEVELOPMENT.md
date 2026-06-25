@@ -87,8 +87,9 @@ App 启动
 - 生成Android标准各分辨率mipmap资源（mdpi ~ xxxhdpi）
 - 更新自适应图标XML（Android 8+）指向新图标
 - 配色从橙红色系（`#FF6D00`）调整为玫瑰粉色系（`#E55D6B`），与图标风格一致
-- 生成release签名密钥库，APK使用v2签名方案签名
+- 生成release签名密钥库（有效期100000天 ≈ 274年），APK使用v2签名方案签名
 - 优化ProGuard保留规则，确保TimerReceiver不被混淆
+- 修复自适应图标显示：foreground 改为透明色，避免双图叠加导致图标异常
 
 ---
 
