@@ -7,4 +7,6 @@
     <string name="timer_started">⏱ MIUI 计时器已启动</string>
     <string name="scan_opened">📸 美团扫一扫已打开</string>
     <string name="meituan_not_found">未安装美团 App，请先下载</string>
+    <string name="footer_line1">世界的风吹向你 / 开源项目 / 一切为了还车</string>
+    <string name="footer_link">https://github.com/Simiely/meituan-bike-reminder</string>
 </resources>
