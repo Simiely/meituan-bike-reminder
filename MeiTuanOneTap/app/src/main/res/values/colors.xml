@@ -15,6 +15,8 @@
     <color name="on_surface">#212121</color>
     <!-- 分割线 -->
     <color name="divider">#EEEEEE</color>
+    <!-- 透明色（自适应图标 foreground 使用）-->
+    <color name="transparent">#00000000</color>
     <!-- 图标背景（与图标主色调匹配）-->
     <color name="icon_bg">#FE878D</color>
 </resources>
