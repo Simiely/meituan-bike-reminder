@@ -97,11 +97,11 @@
     z-index:100;display:flex;flex-direction:column;gap:12px;
   }
   .dot-btn{
-    width:9px;height:9px;border-radius:50%;border:none;cursor:pointer;
-    background:rgba(26,23,21,.22);padding:0;position:relative;
+    width:3px;height:3px;border-radius:50%;border:none;cursor:pointer;
+    background:rgba(26,23,21,.22);padding:0;position:relative;opacity:.5;
     transition:all .4s var(--ease);
   }
-  .dot-btn.active{background:var(--rose);transform:scale(1.5)}
+  .dot-btn.active{background:var(--rose);transform:scale(1.5);opacity:1}
   .dot-btn::after{
     content:attr(data-label);position:absolute;right:18px;top:50%;transform:translateY(-50%);
     font-family:"Geist Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
