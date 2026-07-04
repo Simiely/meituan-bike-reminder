@@ -1,9 +1,19 @@
 <!DOCTYPE html>
+<!--
+╔══════════════════════════════════════════════════════════════════════╗
+║      扫完记得还 — 美团骑车锁车提醒落地页                              ║
+║                                                                      ║
+║  基于 hub-world/templates/template.html 架构重构                      ║
+║  使用 CONFIG 驱动渲染，内容集中管理                                   ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>扫完记得还 — 美团骑车锁车提醒</title>
+<title data-bind="pageTitle">扫完记得还 — 美团骑车锁车提醒</title>
+<link rel="icon" href="https://simiely.github.io/hub-world/favicon.png" type="image/png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet" />
@@ -15,6 +25,7 @@
     --ink-soft:#A89F9A;
     --ink-faint:#6E6560;
     --rose:#E55D6B;
+    --rose-rgb:229,93,107;
     --rose-deep:#C94D5A;
     --rose-soft:#F7A8AE;
     --cream:#2A2220;
@@ -89,6 +100,9 @@
   .nav__meta a{color:inherit;text-decoration:none;position:relative}
   .nav__meta a::after{content:"";position:absolute;left:0;bottom:-3px;height:1px;width:0;background:currentColor;transition:width .4s var(--ease)}
   .nav__meta a:hover::after{width:100%}
+  #nav-version-link::after{display:none}
+  #nav-version-link .nav__ver{transition:all .35s var(--ease);display:inline-block}
+  #nav-version-link:hover .nav__ver{background:var(--rose);border-color:var(--rose);color:#fff}
   .nav__ver{padding:5px 11px;border:1px solid currentColor;border-radius:100px;font-size:11px}
 
   /* ============ DOTS ============ */
@@ -193,13 +207,13 @@
   .hero__sub{margin-top:28px;max-width:520px;font-size:clamp(14px,1.4vw,17px);line-height:1.55;color:var(--ink-soft)}
   .hero__sub b{color:var(--ink);font-weight:600}
 
-  .c4d-badge{
+  .badge-area{
     justify-self:end;align-self:center;text-align:right;position:relative;
   }
-  .c4d-badge__icon{font-family:"Bricolage Grotesque",sans-serif;font-weight:300;font-size:clamp(72px,12vw,160px);line-height:1;letter-spacing:-.02em;margin-bottom:12px}
-  .c4d-badge__label{font-family:"Geist Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
-  .c4d-badge__tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
-  .c4d-badge__tags span{
+  .badge-area__icon{font-family:"Bricolage Grotesque",sans-serif;font-weight:300;font-size:clamp(72px,12vw,160px);line-height:1;letter-spacing:-.02em;margin-bottom:12px}
+  .badge-area__label{font-family:"Geist Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+  .badge-area__tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+  .badge-area__tags span{
     padding:5px 12px;border:1px solid var(--hairline);border-radius:100px;
     font-family:"Geist Mono",monospace;font-size:11px;color:var(--ink-soft);
   }
@@ -316,7 +330,7 @@
 
   /* ============ SLIDE 6: CTA ============ */
   .cta{color:#E8E4E1;text-align:center;position:relative;overflow:hidden}
-  .cta::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120vw;height:120vw;max-width:1000px;max-height:1000px;border-radius:50%;background:radial-gradient(circle at 50% 50%, rgba(229,93,107,.28), transparent 55%)}
+  .cta::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120vw;height:120vw;max-width:1000px;max-height:1000px;border-radius:50%;background:radial-gradient(circle at 50% 50%, rgba(var(--rose-rgb), .28), transparent 55%)}
   .cta__inner{position:relative;max-width:900px;margin:0 auto}
   .cta__eyebrow{font-family:"Geist Mono",monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--rose-soft);margin-bottom:28px}
   .cta__title{font-family:"Bricolage Grotesque",sans-serif;font-weight:400;font-size:clamp(40px,7.5vw,124px);line-height:.94;letter-spacing:-.035em}
@@ -326,9 +340,9 @@
     display:inline-flex;align-items:center;gap:14px;
     background:var(--rose);color:#fff;border:none;padding:16px 36px;border-radius:100px;
     font-family:"Geist",sans-serif;font-size:15px;font-weight:600;text-decoration:none;
-    cursor:pointer;transition:all .35s var(--ease);box-shadow:0 8px 24px rgba(229,93,107,.35);
+    cursor:pointer;transition:all .35s var(--ease);box-shadow:0 8px 24px rgba(var(--rose-rgb), .35);
   }
-  .btn-primary:hover{background:var(--rose-deep);transform:translateY(-3px);box-shadow:0 12px 32px rgba(229,93,107,.45)}
+  .btn-primary:hover{background:var(--rose-deep);transform:translateY(-3px);box-shadow:0 12px 32px rgba(var(--rose-rgb), .45)}
   .btn-ghost{
     display:inline-flex;align-items:center;gap:14px;
     background:transparent;color:var(--ink);border:1px solid var(--hairline);padding:16px 36px;border-radius:100px;
@@ -340,25 +354,7 @@
   .cta__meta a{color:var(--rose-soft);text-decoration:none}
   .cta__meta a:hover{text-decoration:underline}
 
-  /* ============ RESPONSIVE ============ */
-  @media(max-width:860px){
-    .hero__inner{grid-template-columns:1fr;gap:24px}
-    .c4d-badge{text-align:left;justify-self:start}
-    .c4d-badge__tags{justify-content:flex-start}
-    .feat{grid-template-columns:1fr 1fr}
-    .how__grid{grid-template-columns:1fr}
-    .install__grid{grid-template-columns:1fr}
-  }
-  @media(max-width:520px){
-    .feat{grid-template-columns:1fr}
-    .nav__meta .nav__link-text{display:none}
-  }
-  @media(max-width:768px){
-    .nav__brand{display:none}
-    .hub-back{justify-content:flex-start;padding:14px clamp(20px,4vw,40px)}
-  }
-
-  /* ============ BACK TO GITHUB ============ */
+  /* ============ BACK TO HUB ============ */
   .hub-back{
     position:fixed;top:0;left:0;right:0;z-index:200;
     display:flex;align-items:center;justify-content:center;
@@ -374,25 +370,157 @@
   }
   .hub-back__inner:hover{opacity:.7}
   .hub-back__logo{height:1.12rem;width:auto;display:block;vertical-align:middle}
-  </style>
+
+  /* ============ RESPONSIVE ============ */
+  @media(max-width:860px){
+    .hero__inner{grid-template-columns:1fr;gap:24px}
+    .badge-area{text-align:left;justify-self:start}
+    .badge-area__tags{justify-content:flex-start}
+    .feat{grid-template-columns:1fr 1fr}
+    .how__grid{grid-template-columns:1fr}
+    .install__grid{grid-template-columns:1fr}
+  }
+  @media(max-width:520px){
+    .feat{grid-template-columns:1fr}
+    .nav__meta .nav__link-text{display:none}
+  }
+  @media(max-width:768px){
+    .nav__brand{display:none}
+    .nav{justify-content:flex-end}
+    .hub-back{justify-content:flex-start;padding:14px clamp(20px,4vw,40px)}
+  }
+</style>
 </head>
 <body>
 
-<a class="hub-back" href="https://simiely.github.io/hub-world/" aria-label="Hub World">
+<!-- ====================================================================
+  ★★★ 配置区块 — 只修改下方 CONFIG 对象即可 ★★★
+  ==================================================================== -->
+<script>
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+// ★  修改以下 CONFIG 对象即可定制整个页面                                ★
+// ★  所有字段的中文注释说明了该字段的用途                                  ★
+// ★  保持所有键名不变，不需要的字段留空字符串 "" 即可                     ★
+// ★  导航栏 GitHub 链接和版本号都跳转到 repoUrl                          ★
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+var CONFIG = {
+  // ──── 页面基础 ────
+  pageTitle: "扫完记得还 — 美团骑车锁车提醒",
+  brand: "美团骑车锁车提醒",
+  version: "v2.7.1",
+  accentColor: "#E55D6B",
+  repoUrl: "https://github.com/Simiely/meituan-bike-reminder",
+  issuesUrl: "https://github.com/Simiely/meituan-bike-reminder/issues",
+  authorName: "Simiely",
+  authorUrl: "https://github.com/Simiely",
+  license: "MIT License",
+
+  // ──── Hero 首屏 ────
+  hero: {
+    titleLine1: "扫完记得还",
+    titleLine2: "美团骑车",
+    titleEmphasis: "锁车提醒",
+    featureLabel: "Android App · HyperOS 3",
+    featureText: "一键启动 <b>50 分钟倒计时</b> + 打开美团扫一扫<br>到期准时提醒 —— 再也不怕忘锁车",
+    subtitle: "适配小米澎湃 OS 3 · 灵动岛倒计时 · 零操作等待 · <b>扫完即走，到点提醒</b>",
+    badgeLabel: "Platform",
+    badgeIcon: "🚲",
+    tags: ["HyperOS 3", "Android 7+", "MIUI"],
+    tickerItems: ["50分钟倒计时", "美团扫一扫", "灵动岛显示", "响铃提醒", "一键启动", "到点锁车"]
+  },
+
+  // ──── Problem 痛点屏 ────
+  problem: {
+    eyebrow: "骑行之痛",
+    title: "扫了就走<br>结果<em>忘锁车</em>",
+    description: "美团骑完车，扫码走人一气呵成——结果车没锁，费用一直扣。<strong>等发现时已经多扣了好几块。</strong>手动记时太麻烦，系统闹钟又不够精准。",
+    stats: [
+      { number: "50", label: "分钟\\n覆盖绝大多数骑行" },
+      { number: "2", label: "步操作\\n点击即用" },
+      { number: "1", label: "次提醒\\n绝不遗漏" }
+    ]
+  },
+
+  // ──── Features 功能屏 ────
+  features: {
+    sectionNumber: "02",
+    title: "全部",
+    titleEmphasis: "功能",
+    items: [
+      { icon: "⏱️", name: "一键启动倒计时", desc: "点击图标自动启动 50 分钟系统倒计时。无弹窗打扰，支持灵动岛实时显示。" },
+      { icon: "📸", name: "自动打开扫一扫", desc: "倒计时启动后自动跳转美团扫一扫界面。不需任何额外操作，扫码即走。" },
+      { icon: "🔔", name: "准时响铃提醒", desc: "倒计时归零时系统自动响铃，提醒锁车。再也不会因忘记而多扣费用。" },
+      { icon: "🧠", name: "灵动岛支持", desc: "倒计时在灵动岛中实时展示剩余时间。无需打开 App，一眼可见进度。" },
+      { icon: "🛡️", name: "首次授权引导", desc: "首次使用自动引导通知权限授权。简洁明了，一次配置永久使用。" },
+      { icon: "⚡", name: "轻量无后台", desc: "App 仅 2MB，启动即走。不驻留后台、不耗电、不占内存。用完即走。" }
+    ]
+  },
+
+  // ──── Usage 使用引导屏 ────
+  usage: {
+    sectionNumber: "03",
+    title: "快速",
+    titleEmphasis: "上手",
+    steps: [
+      { icon: "📲", name: "安装 App", desc: "从 Releases 下载 APK，在手机上完成安装。支持 Android 7.0+ / HyperOS 3。", accent: true },
+      { icon: "🔑", name: "授权通知", desc: "首次打开 App → 点击按钮 → 按系统提示授予通知权限。只需一次。", accent: false },
+      { icon: "🚲", name: "扫码骑车", desc: "点击 App 图标 → 自动启动倒计时 → 自动跳转美团扫一扫 → 扫码骑车出发。", accent: false },
+      { icon: "🔔", name: "到点锁车", desc: "50 分钟到 → 系统响铃提醒 → 拿出手机锁车 → 骑行完美结束。", accent: true }
+    ],
+    flowLabels: ["安装 APK", "→", "授权通知", "→", "点击图标", "→", "倒计时启动", "→", "扫码骑车", "→", "响铃锁车"]
+  },
+
+  // ──── Install 安装指南屏 ────
+  install: {
+    sectionNumber: "04",
+    title: "安装",
+    titleEmphasis: "指南",
+    steps: [
+      { title: "下载 APK", desc: "从 GitHub Releases 下载最新版本 meituan-bike-reminder-v2.7.1.apk" },
+      { title: "开启安装权限", desc: "在手机设置中允许「未知来源应用安装」—— 或直接使用系统文件管理器安装" },
+      { title: "打开 App", desc: "点击图标 → 第一次使用需要授予通知权限 → 按提示操作即可" },
+      { title: "开始使用", desc: "以后每次骑车：点击图标 → 自动倒计时 → 自动跳转美团扫一扫 → 出发！" }
+    ],
+    codeSnippet: '<span class="cm"># 从源码构建（可选）</span><br>git clone https://github.com/<br><span class="hl">Simiely</span>/<span class="hl">meituan-bike-reminder</span>.git',
+    compatInfo: '<span class="cm">● 小米澎湃 OS 3（HyperOS 3）</span><br><span class="cm">● Android 7.0+</span><br><span class="cm">● 纯原生 Android · Kotlin</span>',
+    downloadUrl: "https://github.com/Simiely/meituan-bike-reminder/releases",
+    downloadLabel: "⬇ 下载最新 APK"
+  },
+
+  // ──── CTA 行动号召屏 ────
+  cta: {
+    eyebrow: "Never forget to lock",
+    title: "下次骑车<br>先点一下<em>这个 App</em>",
+    buttons: [
+      { url: "https://github.com/Simiely/meituan-bike-reminder", label: "★ Star on GitHub", primary: true },
+      { url: "https://github.com/Simiely/meituan-bike-reminder/issues", label: "💬 反馈问题", primary: false }
+    ],
+    metaHtml: 'MIT License · Made by <a href="https://github.com/Simiely" target="_blank">Simiely</a>'
+  },
+
+  // ──── 导航点标签 ────
+  dotLabels: ["Home", "Problem", "Features", "Usage", "Install", "CTA"]
+};
+</script>
+
+<!-- ============================================================
+     导航 / Hub Back
+     ============================================================ -->
+<a class="hub-back" href="https://simiely.github.io/hub-world/" id="hub-back-link" aria-label="Hub World">
   <span class="hub-back__inner">
-    <img class="hub-back__logo" src="https://simiely.github.io/hub-world/logo.png" alt="Hub World">
-    <span>Hub World</span>
+    <img class="hub-back__logo" src="https://simiely.github.io/hub-world/logo.png" alt="Hub World" id="hub-back-logo">
+    <span id="hub-back-label">Hub World</span>
   </span>
 </a>
 
 <nav class="nav">
   <div class="nav__brand">
     <span class="dot"></span>
-    美团骑车锁车提醒
+    <span id="brand-name">美团骑车锁车提醒</span>
   </div>
   <div class="nav__meta">
-    <a href="https://github.com/Simiely/meituan-bike-reminder" target="_blank" class="nav__link-text">GitHub</a>
-    <span class="nav__ver">v2.7.1</span>
+    <a href="#" target="_blank" id="nav-github-link" class="nav__link-text">GitHub</a>
+    <a href="#" target="_blank" id="nav-version-link" style="text-decoration:none;color:inherit"><span class="nav__ver" id="nav-version">v2.7.1</span></a>
   </div>
 </nav>
 
@@ -412,32 +540,30 @@
 
 <div class="deck" id="deck">
 
-  <!-- ============================================ -->
-  <!-- SLIDE 1: HERO -->
-  <!-- ============================================ -->
+  <!-- ==========================================================
+       SLIDE 1: HERO
+       ========================================================== -->
   <section class="slide hero">
     <div class="hero__inner">
       <div>
         <div class="anim d1">
           <h1 class="hero__title">
-            扫完<em>记得</em>还<br>
-            <span class="l2">美团骑车锁车提醒</span>
+            <span id="hero-title-1">扫完记得还</span><br>
+            <span class="l2"><span id="hero-title-2">美团骑车</span> <em id="hero-title-em">锁车提醒</em></span>
           </h1>
         </div>
         <div class="hero__feat anim d2">
-          <div class="hero__feat-label">Android App · HyperOS 3</div>
-          <div class="hero__feat-text">
-            一键启动 <b>50 分钟倒计时</b> + 打开美团扫一扫<br>到期准时提醒 —— 再也不怕忘锁车
-          </div>
+          <div class="hero__feat-label" id="hero-feat-label">Android App · HyperOS 3</div>
+          <div class="hero__feat-text" id="hero-feat-text">一键启动 <b>50 分钟倒计时</b> + 打开美团扫一扫<br>到期准时提醒 —— 再也不怕忘锁车</div>
         </div>
-        <div class="hero__sub anim d3">
+        <div class="hero__sub anim d3" id="hero-subtitle">
           适配小米澎湃 OS 3 · 灵动岛倒计时 · 零操作等待 · <b>扫完即走，到点提醒</b>
         </div>
       </div>
-      <div class="c4d-badge anim scale d4">
-        <div class="c4d-badge__label">Platform</div>
-        <div class="c4d-badge__icon">🚲</div>
-        <div class="c4d-badge__tags">
+      <div class="badge-area anim scale d4">
+        <div class="badge-area__label" id="hero-badge-label">Platform</div>
+        <div class="badge-area__icon" id="hero-badge-icon">🚲</div>
+        <div class="badge-area__tags" id="hero-badge-tags">
           <span>HyperOS 3</span>
           <span>Android 7+</span>
           <span>MIUI</span>
@@ -445,13 +571,7 @@
       </div>
     </div>
     <div class="ticker">
-      <div class="ticker__track">
-        <span class="ticker__item">50 min countdown</span>
-        <span class="ticker__item">Open Meituan scan</span>
-        <span class="ticker__item">Dynamic Island</span>
-        <span class="ticker__item">Ring alarm</span>
-        <span class="ticker__item">One tap</span>
-        <span class="ticker__item">Lock reminder</span>
+      <div class="ticker__track" id="ticker-track">
         <span class="ticker__item">50 min countdown</span>
         <span class="ticker__item">Open Meituan scan</span>
         <span class="ticker__item">Dynamic Island</span>
@@ -462,22 +582,23 @@
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- SLIDE 2: PROBLEM -->
-  <!-- ============================================ -->
+  <!-- ==========================================================
+       SLIDE 2: PROBLEM
+       ========================================================== -->
   <section class="slide problem" data-mouse-parallax>
     <div class="problem__inner">
       <div class="problem__eyebrow anim d1">
-        <span class="bar"></span> 骑行之痛
+        <span class="bar"></span>
+        <span id="problem-eyebrow">骑行之痛</span>
       </div>
-      <h2 class="problem__title anim d2">
+      <h2 class="problem__title anim d2" id="problem-title">
         扫了就走<br>结果<em>忘锁车</em>
       </h2>
-      <p class="problem__sub anim d3">
+      <p class="problem__sub anim d3" id="problem-desc">
         美团骑完车，扫码走人一气呵成——结果车没锁，费用一直扣。<strong>等发现时已经多扣了好几块。</strong>
         手动记时太麻烦，系统闹钟又不够精准。
       </p>
-      <div class="problem__stat anim d4">
+      <div class="problem__stat anim d4" id="problem-stats">
         <div class="item">
           <span class="n">50</span>
           <span class="l">分钟<br>覆盖绝大多数骑行</span>
@@ -494,177 +615,56 @@
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- SLIDE 3: FEATURES -->
-  <!-- ============================================ -->
-  <section class="slide">
+  <!-- ==========================================================
+       SLIDE 3: FEATURES
+       ========================================================== -->
+  <section class="slide" id="slide-features">
     <div class="sec__head anim d1">
-      <span class="sec__num">01</span>
-      <h2 class="sec__title">全部<em>功能</em></h2>
+      <span class="sec__num" id="feat-section-num">01</span>
+      <h2 class="sec__title"><span id="feat-title">全部</span><em id="feat-title-em">功能</em></h2>
     </div>
-    <div class="feat">
-      <div class="feat__cell anim scale d2">
-        <span class="feat__num">01</span>
-        <div>
-          <div class="feat__icon">⏱️</div>
-          <div class="feat__name">一键启动倒计时</div>
-          <div class="feat__desc">点击图标自动启动 50 分钟系统倒计时。无弹窗打扰，支持灵动岛实时显示。</div>
-        </div>
-      </div>
-      <div class="feat__cell anim scale d3">
-        <span class="feat__num">02</span>
-        <div>
-          <div class="feat__icon">📸</div>
-          <div class="feat__name">自动打开扫一扫</div>
-          <div class="feat__desc">倒计时启动后自动跳转美团扫一扫界面。不需任何额外操作，扫码即走。</div>
-        </div>
-      </div>
-      <div class="feat__cell anim scale d4">
-        <span class="feat__num">03</span>
-        <div>
-          <div class="feat__icon">🔔</div>
-          <div class="feat__name">准时响铃提醒</div>
-          <div class="feat__desc">倒计时归零时系统自动响铃，提醒锁车。再也不会因忘记而多扣费用。</div>
-        </div>
-      </div>
-      <div class="feat__cell anim scale d5">
-        <span class="feat__num">04</span>
-        <div>
-          <div class="feat__icon">🧠</div>
-          <div class="feat__name">灵动岛支持</div>
-          <div class="feat__desc">倒计时在灵动岛中实时展示剩余时间。无需打开 App，一眼可见进度。</div>
-        </div>
-      </div>
-      <div class="feat__cell anim scale d6">
-        <span class="feat__num">05</span>
-        <div>
-          <div class="feat__icon">🛡️</div>
-          <div class="feat__name">首次授权引导</div>
-          <div class="feat__desc">首次使用自动引导通知权限授权。简洁明了，一次配置永久使用。</div>
-        </div>
-      </div>
-      <div class="feat__cell anim scale d7">
-        <span class="feat__num">06</span>
-        <div>
-          <div class="feat__icon">⚡</div>
-          <div class="feat__name">轻量无后台</div>
-          <div class="feat__desc">App 仅 2MB，启动即走。不驻留后台、不耗电、不占内存。用完即走。</div>
-        </div>
-      </div>
+    <div class="feat" id="feat-grid">
+      <!-- 由 JS 动态生成 -->
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- SLIDE 4: USAGE -->
-  <!-- ============================================ -->
-  <section class="slide">
+  <!-- ==========================================================
+       SLIDE 4: USAGE
+       ========================================================== -->
+  <section class="slide" id="slide-usage">
     <div class="sec__head anim d1">
-      <span class="sec__num">02</span>
-      <h2 class="sec__title">快速<em>上手</em></h2>
+      <span class="sec__num" id="usage-section-num">02</span>
+      <h2 class="sec__title"><span id="usage-title">快速</span><em id="usage-title-em">上手</em></h2>
     </div>
-    <div class="how__grid">
-      <div class="how__cell how__cell--accent anim from-l d2">
-        <span class="how__step">01</span>
-        <div class="how__icon">📲</div>
-        <div>
-          <div class="how__name">安装 App</div>
-          <div class="how__desc">从 Releases 下载 APK，在手机上完成安装。支持 Android 7.0+ / HyperOS 3。</div>
-        </div>
-      </div>
-      <div class="how__cell anim from-r d3">
-        <span class="how__step">02</span>
-        <div class="how__icon">🔑</div>
-        <div>
-          <div class="how__name">授权通知</div>
-          <div class="how__desc">首次打开 App → 点击按钮 → 按系统提示授予通知权限。只需一次。</div>
-        </div>
-      </div>
-      <div class="how__cell anim from-l d4">
-        <span class="how__step">03</span>
-        <div class="how__icon">🚲</div>
-        <div>
-          <div class="how__name">扫码骑车</div>
-          <div class="how__desc">点击 App 图标 → 自动启动倒计时 → 自动跳转美团扫一扫 → 扫码骑车出发。</div>
-        </div>
-      </div>
-      <div class="how__cell how__cell--accent anim from-r d5">
-        <span class="how__step">04</span>
-        <div class="how__icon">🔔</div>
-        <div>
-          <div class="how__name">到点锁车</div>
-          <div class="how__desc">50 分钟到 → 系统响铃提醒 → 拿出手机锁车 → 骑行完美结束。</div>
-        </div>
-      </div>
-      <div class="how__flow anim d6">
-        <span>安装 APK</span>
-        <span class="arrow">→</span>
-        <span>授权通知</span>
-        <span class="arrow">→</span>
-        <span>点击图标</span>
-        <span class="arrow">→</span>
-        <span>倒计时启动</span>
-        <span class="arrow">→</span>
-        <span>扫码骑车</span>
-        <span class="arrow">→</span>
-        <span>响铃锁车</span>
-      </div>
+    <div class="how__grid" id="usage-grid">
+      <!-- 由 JS 动态生成 -->
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- SLIDE 5: INSTALL -->
-  <!-- ============================================ -->
-  <section class="slide install">
+  <!-- ==========================================================
+       SLIDE 5: INSTALL
+       ========================================================== -->
+  <section class="slide install" id="slide-install">
     <div class="sec__head anim d1">
-      <span class="sec__num">03</span>
-      <h2 class="sec__title">安装<em>指南</em></h2>
+      <span class="sec__num" id="install-section-num">03</span>
+      <h2 class="sec__title"><span id="install-title">安装</span><em id="install-title-em">指南</em></h2>
     </div>
     <div class="install__grid">
       <div>
-        <ul class="install__steps">
-          <li class="install__step anim d2">
-            <span class="install__step-num">1</span>
-            <div class="install__step-body">
-              <div class="install__step-title">下载 APK</div>
-              <div class="install__step-desc">从 GitHub Releases 下载最新版本 <strong>meituan-bike-reminder-v2.7.1.apk</strong></div>
-            </div>
-          </li>
-          <li class="install__step anim d3">
-            <span class="install__step-num">2</span>
-            <div class="install__step-body">
-              <div class="install__step-title">开启安装权限</div>
-              <div class="install__step-desc">在手机设置中允许「未知来源应用安装」—— 或直接使用系统文件管理器安装</div>
-            </div>
-          </li>
-          <li class="install__step anim d4">
-            <span class="install__step-num">3</span>
-            <div class="install__step-body">
-              <div class="install__step-title">打开 App</div>
-              <div class="install__step-desc">点击图标 → 第一次使用需要授予通知权限 → 按提示操作即可</div>
-            </div>
-          </li>
-          <li class="install__step anim d5">
-            <span class="install__step-num">4</span>
-            <div class="install__step-body">
-              <div class="install__step-title">开始使用</div>
-              <div class="install__step-desc">以后每次骑车：点击图标 → 自动倒计时 → 自动跳转美团扫一扫 → 出发！</div>
-            </div>
-          </li>
+        <ul class="install__steps" id="install-steps">
+          <!-- 由 JS 动态生成 -->
         </ul>
       </div>
       <div class="anim d4">
-        <div class="install__code">
+        <div class="install__code" id="install-code-snippet">
           <span class="cm"># 从源码构建（可选）</span><br>
-          git clone https://github.com/<br>
-          <span class="hl">Simiely</span>/<span class="hl">meituan-bike-reminder</span>.git
+          git clone ...
         </div>
-        <div class="install__code" style="margin-top:12px;padding:12px 20px">
-          <span class="cm">● 小米澎湃 OS 3（HyperOS 3）</span><br>
-          <span class="cm">● Android 7.0+</span><br>
-          <span class="cm">● 纯原生 Android · Kotlin</span>
+        <div class="install__code" style="margin-top:12px;padding:14px 20px" id="install-compat-info">
+          <span class="cm">● 兼容性信息</span>
         </div>
         <div style="margin-top:20px;">
-          <a href="https://github.com/Simiely/meituan-bike-reminder/releases" target="_blank" class="btn-primary" style="display:inline-flex;font-size:13px;padding:12px 28px;">
+          <a href="#" target="_blank" class="btn-primary" id="install-download-btn" style="display:inline-flex;font-size:13px;padding:12px 28px;">
             ⬇ 下载最新 APK
           </a>
         </div>
@@ -672,51 +672,238 @@
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- SLIDE 6: CTA -->
-  <!-- ============================================ -->
+  <!-- ==========================================================
+       SLIDE 6: CTA
+       ========================================================== -->
   <section class="slide cta">
     <div class="cta__inner">
-      <div class="cta__eyebrow anim d1">Never forget to lock</div>
-      <h2 class="cta__title anim d2">
+      <div class="cta__eyebrow anim d1" id="cta-eyebrow">Never forget to lock</div>
+      <h2 class="cta__title anim d2" id="cta-title">
         下次骑车<br>先点一下<em>这个 App</em>
       </h2>
-      <div class="cta__btns anim d3">
-        <a href="https://github.com/Simiely/meituan-bike-reminder" target="_blank" class="btn-primary">
-          ★ Star on GitHub
-        </a>
-        <a href="https://github.com/Simiely/meituan-bike-reminder/issues" target="_blank" class="btn-ghost">
-          💬 反馈问题
-        </a>
+      <div class="cta__btns anim d3" id="cta-buttons">
+        <!-- 由 JS 动态生成 -->
       </div>
-      <p class="cta__meta anim d4">
-        MIT License · Made by <a href="https://github.com/Simiely" target="_blank">Simiely</a>
+      <p class="cta__meta anim d4" id="cta-meta">
+        MIT License · Made by <a href="#" target="_blank">Simiely</a>
       </p>
     </div>
   </section>
 
 </div>
 
+<!-- ============================================================
+     渲染逻辑
+     ============================================================ -->
 <script>
 (function(){
-  const deck = document.getElementById('deck');
-  const slides = deck.querySelectorAll('.slide');
-  const dots = document.querySelectorAll('.dot-btn');
-  const hint = document.getElementById('hint');
+  var cfg = CONFIG;
 
-  let activeIndex = -1;
-  let ticking = false;
+  // 1. 主题色
+  document.documentElement.style.setProperty('--rose', cfg.accentColor);
+
+  function hexToRgb(hex) {
+    var r = parseInt(hex.slice(1,3), 16);
+    var g = parseInt(hex.slice(3,5), 16);
+    var b = parseInt(hex.slice(5,7), 16);
+    return r+','+g+','+b;
+  }
+  function darkenHex(hex, amount) {
+    var c = function(v){ return Math.max(0, parseInt(v,16) - amount).toString(16).padStart(2,'0'); };
+    return '#' + c(hex.slice(1,3)) + c(hex.slice(3,5)) + c(hex.slice(5,7));
+  }
+  var rgb = hexToRgb(cfg.accentColor);
+  document.documentElement.style.setProperty('--rose-rgb', rgb);
+  document.documentElement.style.setProperty('--rose-deep', darkenHex(cfg.accentColor, 30));
+
+  // 2. 页面基础
+  document.title = cfg.pageTitle;
+  document.getElementById('brand-name').textContent = cfg.brand;
+  document.getElementById('nav-version').textContent = cfg.version;
+  document.getElementById('nav-github-link').href = cfg.repoUrl;
+  document.getElementById('nav-version-link').href = cfg.repoUrl;
+
+  // 3. Hero
+  document.getElementById('hero-title-1').textContent = cfg.hero.titleLine1;
+  document.getElementById('hero-title-2').textContent = cfg.hero.titleLine2;
+  document.getElementById('hero-title-em').textContent = cfg.hero.titleEmphasis;
+  document.getElementById('hero-feat-label').textContent = cfg.hero.featureLabel;
+  document.getElementById('hero-feat-text').innerHTML = cfg.hero.featureText;
+  document.getElementById('hero-subtitle').innerHTML = cfg.hero.subtitle;
+  document.getElementById('hero-badge-label').textContent = cfg.hero.badgeLabel;
+  document.getElementById('hero-badge-icon').textContent = cfg.hero.badgeIcon;
+
+  var tagContainer = document.getElementById('hero-badge-tags');
+  tagContainer.innerHTML = '';
+  if (cfg.hero.tags && cfg.hero.tags.length) {
+    cfg.hero.tags.forEach(function(t) {
+      var span = document.createElement('span');
+      span.textContent = t;
+      tagContainer.appendChild(span);
+    });
+  }
+
+  var tickerTrack = document.getElementById('ticker-track');
+  tickerTrack.innerHTML = '';
+  if (cfg.hero.tickerItems && cfg.hero.tickerItems.length) {
+    var doubled = cfg.hero.tickerItems.concat(cfg.hero.tickerItems);
+    doubled.forEach(function(item) {
+      var span = document.createElement('span');
+      span.className = 'ticker__item';
+      span.textContent = item;
+      tickerTrack.appendChild(span);
+    });
+  }
+
+  // 4. Problem
+  document.getElementById('problem-eyebrow').textContent = cfg.problem.eyebrow;
+  document.getElementById('problem-title').innerHTML = cfg.problem.title;
+  document.getElementById('problem-desc').innerHTML = cfg.problem.description;
+
+  var statsContainer = document.getElementById('problem-stats');
+  statsContainer.innerHTML = '';
+  if (cfg.problem.stats && cfg.problem.stats.length) {
+    cfg.problem.stats.forEach(function(s) {
+      var item = document.createElement('div');
+      item.className = 'item';
+      item.innerHTML = '<span class="n">' + s.number + '</span><span class="l">' + s.label.replace(/\\n/g, '<br>') + '</span>';
+      statsContainer.appendChild(item);
+    });
+  }
+
+  // 5. Features
+  document.getElementById('feat-section-num').textContent = cfg.features.sectionNumber;
+  document.getElementById('feat-title').textContent = cfg.features.title;
+  document.getElementById('feat-title-em').textContent = cfg.features.titleEmphasis;
+
+  var featGrid = document.getElementById('feat-grid');
+  featGrid.innerHTML = '';
+  if (cfg.features.items && cfg.features.items.length) {
+    cfg.features.items.forEach(function(f, i) {
+      var num = (i + 1).toString().padStart(2, '0');
+      var cell = document.createElement('div');
+      cell.className = 'feat__cell anim scale d' + Math.min(i + 2, 7);
+      cell.innerHTML =
+        '<span class="feat__num">' + num + '</span>' +
+        '<div>' +
+          '<div class="feat__icon">' + f.icon + '</div>' +
+          '<div class="feat__name">' + f.name + '</div>' +
+          '<div class="feat__desc">' + f.desc + '</div>' +
+        '</div>';
+      featGrid.appendChild(cell);
+    });
+  }
+
+  // 6. Usage
+  document.getElementById('usage-section-num').textContent = cfg.usage.sectionNumber;
+  document.getElementById('usage-title').textContent = cfg.usage.title;
+  document.getElementById('usage-title-em').textContent = cfg.usage.titleEmphasis;
+
+  var usageGrid = document.getElementById('usage-grid');
+  usageGrid.innerHTML = '';
+  if (cfg.usage.steps && cfg.usage.steps.length) {
+    cfg.usage.steps.forEach(function(s, i) {
+      var cell = document.createElement('div');
+      var animClass = (i % 2 === 0) ? 'from-l' : 'from-r';
+      cell.className = 'how__cell' + (s.accent ? ' how__cell--accent' : '') + ' anim ' + animClass + ' d' + (i + 2);
+      cell.innerHTML =
+        '<span class="how__step">0' + (i + 1) + '</span>' +
+        '<div class="how__icon">' + s.icon + '</div>' +
+        '<div>' +
+          '<div class="how__name">' + s.name + '</div>' +
+          '<div class="how__desc">' + s.desc + '</div>' +
+        '</div>';
+      usageGrid.appendChild(cell);
+    });
+
+    var flowBar = document.createElement('div');
+    flowBar.className = 'how__flow anim d' + Math.min(cfg.usage.steps.length + 2, 8);
+    flowBar.innerHTML = cfg.usage.flowLabels.map(function(l) {
+      return l === '\u2192' ? '<span class="arrow">\u2192</span>' : '<span>' + l + '</span>';
+    }).join('');
+    usageGrid.appendChild(flowBar);
+  }
+
+  // 7. Install
+  document.getElementById('install-section-num').textContent = cfg.install.sectionNumber;
+  document.getElementById('install-title').textContent = cfg.install.title;
+  document.getElementById('install-title-em').textContent = cfg.install.titleEmphasis;
+
+  var installSteps = document.getElementById('install-steps');
+  installSteps.innerHTML = '';
+  if (cfg.install.steps && cfg.install.steps.length) {
+    cfg.install.steps.forEach(function(s, i) {
+      var li = document.createElement('li');
+      li.className = 'install__step anim d' + (i + 2);
+      li.innerHTML =
+        '<span class="install__step-num">' + (i + 1) + '</span>' +
+        '<div class="install__step-body">' +
+          '<div class="install__step-title">' + s.title + '</div>' +
+          '<div class="install__step-desc">' + s.desc + '</div>' +
+        '</div>';
+      installSteps.appendChild(li);
+    });
+  }
+
+  document.getElementById('install-code-snippet').innerHTML = cfg.install.codeSnippet;
+  document.getElementById('install-compat-info').innerHTML = cfg.install.compatInfo;
+  var dlBtn = document.getElementById('install-download-btn');
+  dlBtn.href = cfg.install.downloadUrl;
+  dlBtn.innerHTML = cfg.install.downloadLabel;
+
+  // 8. CTA
+  document.getElementById('cta-eyebrow').textContent = cfg.cta.eyebrow;
+  document.getElementById('cta-title').innerHTML = cfg.cta.title;
+
+  var ctaBtns = document.getElementById('cta-buttons');
+  ctaBtns.innerHTML = '';
+  if (cfg.cta.buttons && cfg.cta.buttons.length) {
+    cfg.cta.buttons.forEach(function(b) {
+      var a = document.createElement('a');
+      a.href = b.url;
+      a.target = '_blank';
+      a.className = b.primary ? 'btn-primary' : 'btn-ghost';
+      a.textContent = b.label;
+      ctaBtns.appendChild(a);
+    });
+  }
+
+  document.getElementById('cta-meta').innerHTML = cfg.cta.metaHtml;
+
+  // 9. 导航点标签
+  var dotBtns = document.querySelectorAll('.dot-btn');
+  cfg.dotLabels.forEach(function(label, i) {
+    if (dotBtns[i]) {
+      dotBtns[i].setAttribute('data-label', label);
+      dotBtns[i].setAttribute('aria-label', label);
+    }
+  });
+})();
+</script>
+
+<!-- ============================================================
+     交互逻辑
+     ============================================================ -->
+<script>
+(function(){
+  var deck = document.getElementById('deck');
+  var slides = deck.querySelectorAll('.slide');
+  var dots = document.querySelectorAll('.dot-btn');
+  var hint = document.getElementById('hint');
+
+  var activeIndex = -1;
+  var ticking = false;
 
   function updateActive(){
-    const scrollTop = deck.scrollTop;
-    const viewHeight = deck.clientHeight;
+    var scrollTop = deck.scrollTop;
+    var viewHeight = deck.clientHeight;
 
-    let bestIdx = 0;
-    let bestDist = Infinity;
-    slides.forEach((s, i) => {
-      const rect = s.getBoundingClientRect();
-      const mid = rect.top + rect.height / 2;
-      const dist = Math.abs(mid - viewHeight / 2);
+    var bestIdx = 0;
+    var bestDist = Infinity;
+    slides.forEach(function(s, i) {
+      var rect = s.getBoundingClientRect();
+      var mid = rect.top + rect.height / 2;
+      var dist = Math.abs(mid - viewHeight / 2);
       if(dist < bestDist){
         bestDist = dist;
         bestIdx = i;
@@ -725,10 +912,10 @@
 
     if(bestIdx !== activeIndex){
       activeIndex = bestIdx;
-      dots.forEach((d, i) => {
+      dots.forEach(function(d, i) {
         d.classList.toggle('active', i === activeIndex);
       });
-      slides.forEach((s, i) => {
+      slides.forEach(function(s, i) {
         s.classList.toggle('is-active', i === activeIndex);
       });
     }
@@ -740,9 +927,9 @@
     }
   }
 
-  deck.addEventListener('scroll', () => {
+  deck.addEventListener('scroll', function() {
     if(!ticking){
-      requestAnimationFrame(() => {
+      requestAnimationFrame(function() {
         updateActive();
         ticking = false;
       });
@@ -750,23 +937,23 @@
     }
   });
 
-  dots.forEach((dot) => {
-    dot.addEventListener('click', () => {
-      const idx = parseInt(dot.dataset.index);
-      const target = slides[idx];
+  dots.forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      var idx = parseInt(dot.dataset.index);
+      var target = slides[idx];
       if(target){
         target.scrollIntoView({ behavior: 'smooth' });
       }
     });
   });
 
-  const problemSlide = document.querySelector('.problem');
+  var problemSlide = document.querySelector('.problem');
   if(problemSlide){
-    document.addEventListener('mousemove', (e) => {
-      const rect = problemSlide.getBoundingClientRect();
+    document.addEventListener('mousemove', function(e) {
+      var rect = problemSlide.getBoundingClientRect();
       if(rect.top < window.innerHeight && rect.bottom > 0){
-        const x = (e.clientX / window.innerWidth) * 100;
-        const y = (e.clientY / window.innerHeight) * 100;
+        var x = (e.clientX / window.innerWidth) * 100;
+        var y = (e.clientY / window.innerHeight) * 100;
         problemSlide.style.setProperty('--mx', x + '%');
         problemSlide.style.setProperty('--my', y + '%');
       }
