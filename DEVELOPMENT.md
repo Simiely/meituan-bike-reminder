@@ -44,7 +44,7 @@ imeituan://platformapi/startapp         ← 平台入口兜底
 
 | 要点 | 说明 |
 |---|---|
-| 延时 | 倒计时和美团之间隔 1000ms，避免 Activity 切换时相机初始化竞争 |
+| 延时与预热 | 计时器立即启动(SKIP_UI)；+400ms 拉起美团首页预热(错开同帧 startActivity 冲突，v1.8.0 坑)；+1600ms(400+1200) 由 AlarmManager 触发扫码 `PendingIntent`(豁免 Android 10+ 后台启动限制，且此时美团已是热进程，规避冷启动黑屏) |
 | 签名 | APK Signature Scheme v2；密钥通过 `keystore.properties`/环境变量注入，**不入库** |
 | 混淆 | R8 开启，保留 MainActivity 和 TimerReceiver |
 | 包可见性 | Manifest `<queries>` 声明 `ACTION_SET_TIMER` 和 `imeituan` Scheme |
@@ -159,13 +159,14 @@ App 名从「一键骑车」改为「扫完记得还」。文案同步优化。
 
 删除自适应图标 XML，仅保留 PNG。之前折腾了三次都没成功——`@color/transparent` 不是 drawable、双图叠加、空 layer-list 在某些 ROM 上不工作。最朴素的 PNG 反而是最可靠的。
 
-### 冷启动美团扫一扫黑屏（边界已查清，未彻底解决）
+### 冷启动美团扫一扫黑屏（v2.7.1 用 PendingIntent 方案实现，实验性待真机验证）
 
 > **现象：美团不在后台（冷启动）时，自动打开扫码页相机预览概率性黑屏，但能正常扫码。**
 > **关键判断：黑屏却仍能解码 = 相机在采帧、预览 Surface 没渲染 → 预览渲染问题，非相机采集问题。**
 > **根因：美团扫码活动在“冷进程”里 `camera.open` 早于预览 `Surface` 就绪，竞态导致黑屏；热进程（已在后台）下不出现。美团代码改不了。**
-> **启动器侧踩过的失败路径（重要，避免再踩）：想“先打开美团预热进程、再跳扫码”来复现热进程路径，但 ——① 与计时器 `startActivity` 同帧会互相覆盖、把计时器顶掉（v1.8.0 同款坑）；② 预热把本 App 压到后台后，延时再 `startActivity` 拉相机页会被 Android 10+ 后台启动限制直接拦截（"Background activity start was blocked"），扫码页永远不弹。故“预热+再拉起”在纯启动器里行不通。**
-> **唯一 OS 合规的修复方向：用 `PendingIntent`（经 AlarmManager 触发）延时拉起扫码——PendingIntent 豁免后台启动限制，且预热后美团已是热进程。属实验性改动，需真机验证，未在 v2.7.1 落地。**
+> **启动器侧踩过的失败路径（重要，避免再踩）：想“先打开美团预热进程、再跳扫码”来复现热进程路径，但 ——① 与计时器 `startActivity` 同帧会互相覆盖、把计时器顶掉（v1.8.0 同款坑）；② 预热把本 App 压到后台后，延时再 `startActivity` 拉相机页会被 Android 10+ 后台启动限制直接拦截（"Background activity start was blocked"），扫码页永远不弹。故“预热+直接拉起”在纯启动器里行不通。**
+> **已落地的修复（v2.7.1）：`launchMeituan()` 两步 ——① 错开计时器 +400ms 用 `handler` 拉起美团首页做进程预热（本 App 此刻仍在前台，启动不被拦截）；② 预热后由 `AlarmManager.setExactAndAllowWhileIdle` 在 +1600ms 触发**扫码 `PendingIntent`**：PendingIntent 由系统调度触发，**豁免后台启动限制**，且此时美团已是热进程、预览 Surface 已就绪，规避冷启动黑屏竞态。Android 12+ 无精确闹钟权限时退化为 `setAndAllowWhileIdle`（仍由系统调度、仍豁免后台限制，只是触发时机不精确）；闹钟 API 异常时回退到直接深链（可能冷启动黑屏）。**
+> **⚠️ 仍为实验性改动，需在真机（HyperOS 3）验证冷启动黑屏是否消除；若仍偶发，优先调大 `MEITUAN_WARMUP_MS`（默认 1200ms）。**
 
 ### v2.4.0 — 图标替换 + 配色 + 签名
 

@@ -42,6 +42,11 @@ class MainActivity : AppCompatActivity() {
         private const val TIMER_MILLIS = TIMER_SECONDS * 1000L
         private const val REQ_POST_NOTIFICATIONS = 1001
         private const val MEITUAN_PACKAGE = "com.sankuai.meituan"
+        // 计时与预热首页错开，避免同帧 startActivity 互相覆盖（v1.8.0 坑）
+        private const val TIMER_TO_MEITUAN_GAP_MS = 400L
+        // 预热后，由系统闹钟触发扫码 PendingIntent 前的热进程稳定时间
+        private const val MEITUAN_WARMUP_MS = 1200L
+        private const val SCAN_PENDING_REQ = 1
 
         private val MEITUAN_SCHEMES = listOf(
             "imeituan://www.meituan.com/scanQRCode",
@@ -128,9 +133,7 @@ class MainActivity : AppCompatActivity() {
         if (skipIntent.resolveActivity(packageManager) != null) {
             try {
                 startActivity(skipIntent)
-                // 计时已启动，美团稍后异步打开 —— 先显示"即将打开"，避免误报失败
-                binding.statusText.text = "⏱ 50分钟倒计时已启动\n📸 正在打开美团…"
-                scheduleMeituan(1000) // 延后 1 秒启动美团，给系统时钟留足切换时间
+                launchMeituan(true) // 预热美团 + 由系统闹钟延时拉起扫码（规避冷启动黑屏）
                 binding.btnStartRiding.isEnabled = true
                 return
             } catch (e: Exception) {
@@ -156,9 +159,7 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "AlarmManager failed", e)
         }
 
-        val meituanOk = openMeituan()
-        updateStatus(timerOk, meituanOk)
-        binding.btnStartRiding.isEnabled = true
+        launchMeituan(timerOk)
     }
 
     /**
@@ -201,11 +202,69 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun scheduleMeituan(delayMs: Long) {
+    /**
+     * 预热美团并延时拉起扫一扫，规避冷启动相机黑屏。
+     *
+     * 原理：
+     * 1) 先打开美团首页（不调相机），把美团进程预热为"热进程"；
+     * 2) 再由系统闹钟（AlarmManager）触发扫码的 PendingIntent。
+     *    PendingIntent 由系统调度触发，豁免 Android 10+ 后台启动限制；
+     *    此时美团已是热进程，扫码页预览 Surface 已就绪，规避冷启动黑屏竞态。
+     */
+    private fun launchMeituan(timerOk: Boolean) {
+        // ① 预热：错开计时器（TIMER_TO_MEITUAN_GAP_MS），打开美团首页，不调相机
         handler.postDelayed({
-            val meituanOk = openMeituan()
-            updateStatus(true, meituanOk)
-        }, delayMs)
+            openMeituanHome() // 预热失败则忽略，交由下方 PendingIntent 拉起扫码
+        }, TIMER_TO_MEITUAN_GAP_MS)
+
+        // ② 预热后由系统闹钟触发扫码 PendingIntent（豁免后台启动限制）
+        val scanIntent = Intent(Intent.ACTION_VIEW, Uri.parse(MEITUAN_SCHEMES.first())).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val scanPi = PendingIntent.getActivity(
+            this, SCAN_PENDING_REQ, scanIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val alarm = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerAt = System.currentTimeMillis() + TIMER_TO_MEITUAN_GAP_MS + MEITUAN_WARMUP_MS
+        val meituanOk = MEITUAN_SCHEMES.any { scheme ->
+            Intent(Intent.ACTION_VIEW, Uri.parse(scheme)).resolveActivity(packageManager) != null
+        } || packageManager.getLaunchIntentForPackage(MEITUAN_PACKAGE) != null
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarm.canScheduleExactAlarms()) {
+                // 无精确闹钟权限：退化为非精确闹钟（仍由系统调度，豁免后台启动限制）
+                alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, scanPi)
+            } else {
+                alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, scanPi)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "scan pending alarm failed", e)
+            // 闹钟不可用：回退到直接深链（可能冷启动黑屏）
+            openMeituan()
+        }
+        updateStatus(timerOk, meituanOk)
+        binding.btnStartRiding.isEnabled = true
+    }
+
+    /**
+     * 仅打开美团首页做进程预热（不调相机，避免冷启动黑屏）。
+     * 返回是否成功拉起美团首页。
+     */
+    private fun openMeituanHome(): Boolean {
+        return try {
+            val homeIntent = packageManager.getLaunchIntentForPackage(MEITUAN_PACKAGE)?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            if (homeIntent != null) {
+                startActivity(homeIntent)
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "open meituan home failed", e)
+            false
+        }
     }
 
     private fun openMeituan(): Boolean {
