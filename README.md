@@ -63,14 +63,21 @@ cd meituan-bike-reminder
 # 2. 设置 local.properties（指向本地 Android SDK）
 echo "sdk.dir=/path/to/Android/Sdk" > MeiTuanOneTap/local.properties
 
-# 3. 构建 Release APK
+# 3. 配置签名（密钥不入库，见下方说明）
+cp keystore.properties.example keystore.properties
+#   然后编辑 keystore.properties 填入你自己的密钥库路径与口令
+
+# 4. 构建 Release APK
 cd MeiTuanOneTap
 ./gradlew assembleRelease
 
 # 输出：app/build/outputs/apk/release/meituan-bike-reminder-v2.7.1.apk
 ```
 
-项目所需全部文件（源码、资源、签名证书、Gradle Wrapper）均已提交，clone 后按上述步骤即可复现构建。详见 [DEVELOPMENT.md](./DEVELOPMENT.md)。
+> 🔐 **签名密钥不入库**：签名信息通过项目根目录的 `keystore.properties`（已被 `.gitignore` 忽略）或环境变量
+> `KEYSTORE_FILE / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD` 注入。未配置签名时可构建未签名包用于本地调试。
+
+源码、资源、Gradle Wrapper 均已提交，配置好本地 SDK 与签名后即可复现构建。详见 [DEVELOPMENT.md](./DEVELOPMENT.md)。
 
 ---
 

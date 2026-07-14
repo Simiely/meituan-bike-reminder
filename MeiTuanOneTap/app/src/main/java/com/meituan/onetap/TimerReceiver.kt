@@ -2,7 +2,6 @@ package com.meituan.onetap
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -29,14 +28,8 @@ class TimerReceiver : BroadcastReceiver() {
     private fun showNotification(context: Context) {
         createChannel(context)
 
-        val openIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, openIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
+        // 不设置 contentIntent：这是"提醒锁车"的通知，点击它不应重新拉起主界面并再次发车。
+        // 用户点击后仅消音（autoCancel）。
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("🚲 该锁车了！")
             .setContentText("50分钟到了，请记得锁车！")
@@ -45,7 +38,6 @@ class TimerReceiver : BroadcastReceiver() {
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setContentIntent(pendingIntent)
             .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

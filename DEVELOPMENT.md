@@ -45,7 +45,7 @@ imeituan://platformapi/startapp         ← 平台入口兜底
 | 要点 | 说明 |
 |---|---|
 | 延时 | 倒计时和美团之间隔 1000ms，避免 Activity 切换时相机初始化竞争 |
-| 签名 | v2 签名方案，有效期 100000 天 |
+| 签名 | APK Signature Scheme v2；密钥通过 `keystore.properties`/环境变量注入，**不入库** |
 | 混淆 | R8 开启，保留 MainActivity 和 TimerReceiver |
 | 包可见性 | Manifest `<queries>` 声明 `ACTION_SET_TIMER` 和 `imeituan` Scheme |
 | 图标 | 纯 mipmap PNG（mdpi~xxxhdpi），无自适应图标 XML 层 |
@@ -76,7 +76,7 @@ App 名从「一键骑车」改为「扫完记得还」。文案同步优化。
 
 ### v2.4.0 — 图标替换 + 配色 + 签名
 
-替换用户提供的液态玻璃风格图标，生成全分辨率 mipmap。配色从橙红 `#FF6D00` 改为玫瑰粉 `#E55D6B`。新增 v2 签名，有效期 274 年。
+替换用户提供的液态玻璃风格图标，生成全分辨率 mipmap。配色从橙红 `#FF6D00` 改为玫瑰粉 `#E55D6B`。新增 APK Signature Scheme v2 签名。
 
 ### v2.3.0 — 首次启动权限优化
 
@@ -135,6 +135,18 @@ Android 11 引入包可见性限制，`resolveActivity()` 返回 null，导致 `
 echo "sdk.dir=/path/to/Android/Sdk" > MeiTuanOneTap/local.properties
 ```
 
+### 签名配置（密钥不入库）
+
+签名信息通过项目根目录 `keystore.properties`（已被 `.gitignore` 忽略）或环境变量注入：
+
+```bash
+cp keystore.properties.example keystore.properties
+# 编辑 keystore.properties：storeFile / storePassword / keyAlias / keyPassword
+```
+
+对应环境变量：`KEYSTORE_FILE`、`KEYSTORE_PASSWORD`、`KEY_ALIAS`、`KEY_PASSWORD`（CI 中用 Secret 注入）。
+未配置时 release 构建走未签名流程，便于本地调试。
+
 ## 构建
 
 ```bash
@@ -161,7 +173,7 @@ gh release create vX.Y.Z --title "标题" --notes "说明" path/to/apk
 
 ```
 meituan-bike-reminder/
-├── release.keystore              # APK 签名证书
+├── keystore.properties.example   # 签名配置模板（复制为 keystore.properties，密钥本身不入库）
 ├── .gitignore
 ├── README.md                     # 用户文档
 ├── DEVELOPMENT.md                # 开发者文档（本文）
@@ -188,4 +200,4 @@ meituan-bike-reminder/
 │               └── values/              # 颜色、字符串、主题
 ```
 
-> clone 后只需 `local.properties` 指向本地 Android SDK，即可 `./gradlew assembleRelease` 一键构建。所有源码、资源、签名证书、Gradle Wrapper 均已包含。
+> clone 后配置 `local.properties`（指向本地 Android SDK）与 `keystore.properties`（签名信息），即可 `./gradlew assembleRelease` 复现构建。源码、资源、Gradle Wrapper 均已包含；**签名密钥不入库**。

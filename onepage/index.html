@@ -12,6 +12,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="description" content="扫完记得还 —— 一键启动 50 分钟倒计时并打开美团扫一扫，到点提醒锁车，再也不怕忘记还车。适配小米澎湃 OS 3 / Android 7.0+。" />
+<meta name="theme-color" content="#E55D6B" />
 <title data-bind="pageTitle">扫完记得还 — 美团骑车锁车提醒</title>
 <link rel="icon" href="https://simiely.github.io/hub-world/favicon.png" type="image/png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -388,6 +390,17 @@
     .nav__brand{display:none}
     .nav{justify-content:flex-end}
     .hub-back{justify-content:flex-start;padding:14px clamp(20px,4vw,40px)}
+  }
+
+  /* 无障碍：尊重"减少动态效果"系统偏好 */
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      animation-duration:.001ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.001ms !important;
+      scroll-behavior:auto !important;
+    }
+    .anim{opacity:1 !important;transform:none !important}
   }
 </style>
 </head>
