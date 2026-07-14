@@ -165,7 +165,9 @@ App 名从「一键骑车」改为「扫完记得还」。文案同步优化。
 > **关键判断：黑屏却仍能解码 = 相机在采帧、预览 Surface 没渲染 → 预览渲染问题，非相机采集问题。**
 > **根因：美团扫码活动在“冷进程”里 `camera.open` 早于预览 `Surface` 就绪，竞态导致黑屏；热进程（已在后台）下不出现。美团代码改不了。**
 > **启动器侧踩过的失败路径（重要，避免再踩）：想“先打开美团预热进程、再跳扫码”来复现热进程路径，但 ——① 与计时器 `startActivity` 同帧会互相覆盖、把计时器顶掉（v1.8.0 同款坑）；② 预热把本 App 压到后台后，延时再 `startActivity` 拉相机页会被 Android 10+ 后台启动限制直接拦截（"Background activity start was blocked"），扫码页永远不弹。故“预热+直接拉起”在纯启动器里行不通。**
-> **已落地的修复（v2.7.1）：`launchMeituan()` 两步 ——① 错开计时器 +400ms 用 `handler` 拉起美团首页做进程预热（本 App 此刻仍在前台，启动不被拦截）；② 预热后由 `AlarmManager.setExactAndAllowWhileIdle` 在 +1600ms 触发**扫码 `PendingIntent`**：PendingIntent 由系统调度触发，**豁免后台启动限制**，且此时美团已是热进程、预览 Surface 已就绪，规避冷启动黑屏竞态。Android 12+ 无精确闹钟权限时退化为 `setAndAllowWhileIdle`（仍由系统调度、仍豁免后台限制，只是触发时机不精确）；闹钟 API 异常时回退到直接深链（可能冷启动黑屏）。**
+> **已落地的修复（v2.7.1）：`launchMeituan()` 两步 ——① 错开计时器 +400ms 用 `handler` 拉起美团首页做进程预热（本 App 此刻仍在前台，启动不被拦截）；② 预热后由 `AlarmManager.setExactAndAllowWhileIdle` 在 +1600ms 触发**扫码 `PendingIntent`**：PendingIntent 由系统调度触发，且此时美团已是热进程、预览 Surface 已就绪，规避冷启动黑屏竞态。**
+> **后台启动 opt-in（关键！）：Android 14(API34) 起发送方、Android 15(API35) 起创建方都必须对 PendingIntent 显式授权后台启动，否则系统**静默拦截**（只打 `Background activity launch blocked!`，不抛异常）。`buildScanPendingIntent()` 已处理：API31~34 加 `FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS`；API35+ 因 compileSdk=34 用**反射**调用 `ActivityOptions.setPendingIntentCreatorBackgroundActivityStartMode(MODE_BACKGROUND_ACTIVITY_START_ALLOWED)`（失败则回退 flag）。Android 12+ 无精确闹钟权限时退化为 `setAndAllowWhileIdle`；闹钟 API 异常时回退直接深链（可能冷启动黑屏）。**
+> **真机调试：`MainActivity.onCreate` 已开 `StrictMode.detectBlockedBackgroundActivityLaunch()`，验证时用 Logcat 过滤 `ActivityTaskManager` 看是否仍出现 `Background activity launch blocked!`。**
 > **⚠️ 仍为实验性改动，需在真机（HyperOS 3）验证冷启动黑屏是否消除；若仍偶发，优先调大 `MEITUAN_WARMUP_MS`（默认 1200ms）。**
 
 ### v2.4.0 — 图标替换 + 配色 + 签名

@@ -1,6 +1,7 @@
 package com.meituan.onetap
 
 import android.Manifest
+import android.app.ActivityOptions
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -12,6 +13,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.StrictMode
 import android.provider.AlarmClock
 import android.provider.Settings
 import android.util.Log
@@ -58,6 +60,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 调试钩子：检测后台启动 Activity 被拦截。
+        // detectBlockedBackgroundActivityLaunch() 是 Android 16(API36) 才加入 StrictMode 的，
+        // 用反射调用，低版本自动跳过（低版本由系统在 Logcat tag=ActivityTaskManager 直接打印
+        // "Background activity launch blocked!"）。验证时过滤该 tag 即可确认扫码 PendingIntent 的 opt-in 是否生效。
+        try {
+            val builderCls = Class.forName("android.os.StrictMode\$VmPolicy\$Builder")
+            val builder = builderCls.getDeclaredConstructor().newInstance()
+            builderCls.getMethod("detectBlockedBackgroundActivityLaunch").invoke(builder)
+            builderCls.getMethod("penaltyLog").invoke(builder)
+            val policy = builderCls.getMethod("build").invoke(builder)
+            val vmPolicyCls = Class.forName("android.os.StrictMode\$VmPolicy")
+            StrictMode::class.java.getMethod("setVmPolicy", vmPolicyCls).invoke(null, policy)
+        } catch (e: Exception) {
+            Log.d(TAG, "StrictMode detectBlockedBackgroundActivityLaunch unavailable (<Android16)", e)
+        }
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         prefs = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -218,13 +235,7 @@ class MainActivity : AppCompatActivity() {
         }, TIMER_TO_MEITUAN_GAP_MS)
 
         // ② 预热后由系统闹钟触发扫码 PendingIntent（豁免后台启动限制）
-        val scanIntent = Intent(Intent.ACTION_VIEW, Uri.parse(MEITUAN_SCHEMES.first())).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        val scanPi = PendingIntent.getActivity(
-            this, SCAN_PENDING_REQ, scanIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val scanPi = buildScanPendingIntent()
         val alarm = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val triggerAt = System.currentTimeMillis() + TIMER_TO_MEITUAN_GAP_MS + MEITUAN_WARMUP_MS
         val meituanOk = MEITUAN_SCHEMES.any { scheme ->
@@ -264,6 +275,64 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "open meituan home failed", e)
             false
+        }
+    }
+
+    /**
+     * 构造扫码的 PendingIntent，并显式授权后台启动 Activity。
+     *
+     * 背景：Android 10+ 限制后台 App 启动 Activity；Android 14(API34) 起发送方、
+     * Android 15(API35) 起创建方都必须显式 opt-in，否则系统会拦截（Logcat 打
+     * "Background activity launch blocked!"，不抛异常）。本 App 经 AlarmManager
+     * 触发扫码，属于"发送方=系统、创建方=本 App"的场景：
+     * - API31~34：用 [PendingIntent.FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS] 允许后台启动；
+     * - API35+：创建方需额外委托，但 compileSdk=34 无法直接引用 API35 符号，
+     *   故用反射调用 [ActivityOptions.setPendingIntentCreatorBackgroundActivityStartMode]
+     *   并传入 MODE_BACKGROUND_ACTIVITY_START_ALLOWED，调用失败则回退到 flag。
+     */
+    private fun buildScanPendingIntent(): PendingIntent {
+        val scanIntent = Intent(Intent.ACTION_VIEW, Uri.parse(MEITUAN_SCHEMES.first())).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val opts = ActivityOptions.makeBasic()
+        // FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS = 0x01000000 (API31+)，SDK34 stub 已移除该常量，
+        // 运行时反射获取，失败则回退硬值。
+        val flagAllowBg = getPendingIntentFlagAllowBackground()
+        var flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // API 31+
+            if (Build.VERSION.SDK_INT >= 35) {
+                // API35+：创建方必须显式委托后台启动权限（compileSdk=34，反射调用）
+                try {
+                    val modeAllowed = ActivityOptions::class.java
+                        .getField("MODE_BACKGROUND_ACTIVITY_START_ALLOWED").getInt(null)
+                    ActivityOptions::class.java
+                        .getMethod(
+                            "setPendingIntentCreatorBackgroundActivityStartMode",
+                            Int::class.javaPrimitiveType
+                        )
+                        .invoke(opts, modeAllowed)
+                } catch (e: Exception) {
+                    Log.w(TAG, "setPendingIntentCreatorBackgroundActivityStartMode failed", e)
+                    flags = flags or flagAllowBg
+                }
+            } else {
+                flags = flags or flagAllowBg
+            }
+        }
+        return PendingIntent.getActivity(this, SCAN_PENDING_REQ, scanIntent, flags, opts.toBundle())
+    }
+
+    /**
+     * 运行时获取 [PendingIntent.FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS]（API31+）。
+     * 该常量在 compileSdk=34 的 stub 中已被移除，故用反射；失败回退到已知硬值 0x01000000。
+     */
+    private fun getPendingIntentFlagAllowBackground(): Int {
+        return try {
+            PendingIntent::class.java
+                .getField("FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS").getInt(null)
+        } catch (e: Exception) {
+            Log.d(TAG, "FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS not found, use fallback 0x01000000", e)
+            0x01000000
         }
     }
 
