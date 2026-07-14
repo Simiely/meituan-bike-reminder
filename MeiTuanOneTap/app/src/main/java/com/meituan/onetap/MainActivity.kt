@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         private const val TIMER_MILLIS = TIMER_SECONDS * 1000L
         private const val REQ_POST_NOTIFICATIONS = 1001
         private const val MEITUAN_PACKAGE = "com.sankuai.meituan"
+        // 预热与扫码拉开间隔，避免同帧 startActivity 互相覆盖（v1.8.0 坑）
+        private const val PREWARM_GAP_MS = 400L
 
         private val MEITUAN_SCHEMES = listOf(
             "imeituan://www.meituan.com/scanQRCode",
@@ -130,7 +132,7 @@ class MainActivity : AppCompatActivity() {
                 startActivity(skipIntent)
                 // 计时已启动，美团稍后异步打开 —— 先显示"即将打开"，避免误报失败
                 binding.statusText.text = "⏱ 50分钟倒计时已启动\n📸 正在打开美团…"
-                scheduleMeituan(1000) // 延后 1 秒启动美团，给系统时钟留足切换时间
+                scheduleMeituan(true, 1000) // 先预热美团进程，1 秒后拉起扫码（热进程规避冷启动黑屏）
                 binding.btnStartRiding.isEnabled = true
                 return
             } catch (e: Exception) {
@@ -156,9 +158,7 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "AlarmManager failed", e)
         }
 
-        val meituanOk = openMeituan()
-        updateStatus(timerOk, meituanOk)
-        binding.btnStartRiding.isEnabled = true
+        scheduleMeituan(timerOk, 1000)
     }
 
     /**
@@ -201,10 +201,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun scheduleMeituan(delayMs: Long) {
+    /**
+     * 先预热美团进程，再拉起扫码 —— 复刻「长按图标→扫一扫」稳定：美团热进程下相机预览不黑屏。
+     * - ① 预热：错开计时器（PREWARM_GAP_MS）先开美团首页让进程变热（避免 v1.8.0 同帧 startActivity 互相覆盖）
+     * - ② 拉起：沿用可靠的后台延时拉起（设备后台启动宽限期内可拉起），
+     *        此刻美团已是热进程，扫码预览 Surface 已就绪 → 规避冷启动黑屏竞态
+     */
+    private fun scheduleMeituan(timerOk: Boolean, delayMs: Long = 1000L) {
+        // ① 预热美团首页（不调相机，进程变热）
+        handler.postDelayed({
+            openMeituanHome()
+        }, (delayMs - PREWARM_GAP_MS).coerceAtLeast(0))
+        // ② 预热后拉起扫码
         handler.postDelayed({
             val meituanOk = openMeituan()
-            updateStatus(true, meituanOk)
+            updateStatus(timerOk, meituanOk)
+            binding.btnStartRiding.isEnabled = true
         }, delayMs)
     }
 
@@ -232,6 +244,27 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) { }
         downloadMeituan()
         return false
+    }
+
+    /**
+     * 仅打开美团首页做进程预热（不调相机，避免冷启动黑屏）。
+     * 返回是否成功拉起美团首页。
+     */
+    private fun openMeituanHome(): Boolean {
+        return try {
+            val homeIntent = packageManager.getLaunchIntentForPackage(MEITUAN_PACKAGE)?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            if (homeIntent != null) {
+                startActivity(homeIntent)
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "open meituan home failed", e)
+            false
+        }
     }
 
     private fun downloadMeituan() {
