@@ -25,7 +25,7 @@ import com.meituan.onetap.databinding.ActivityMainBinding
  * 扫完记得还 App
  *
  * 首次安装 → 显示引导，手动点击初始化权限
- * 初始化后 → 每次打开自动执行（若当前骑行会话仍在进行中则不重复发车）
+ * 初始化后 → 每次打开自动执行（启动倒计时 + 打开美团扫一扫）
  */
 class MainActivity : AppCompatActivity() {
 
@@ -38,7 +38,6 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MeiTuanOneTap"
         private const val PREF_NAME = "app_state"
         private const val KEY_INITIALIZED = "initialized"
-        private const val KEY_RIDE_START = "ride_start_ms"
         private const val TIMER_SECONDS = 3000
         private const val TIMER_MILLIS = TIMER_SECONDS * 1000L
         private const val REQ_POST_NOTIFICATIONS = 1001
@@ -66,7 +65,6 @@ class MainActivity : AppCompatActivity() {
 
         when {
             !prefs.getBoolean(KEY_INITIALIZED, false) -> showWelcome()
-            isRideActive() -> showRideInProgress()
             else -> onStartRiding()
         }
     }
@@ -75,12 +73,8 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         hasLaunched = false
         if (!prefs.getBoolean(KEY_INITIALIZED, false)) return
-        // 骑行进行中重新回到前台 → 不再自动发车，避免重复计时
-        if (isRideActive()) {
-            showRideInProgress()
-        } else {
-            onStartRiding()
-        }
+        // 已初始化 → 每次回到前台都自动执行（启动倒计时 + 打开美团扫一扫）
+        onStartRiding()
     }
 
     override fun onRequestPermissionsResult(
@@ -94,24 +88,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** 判断当前是否有进行中的骑行会话（上次发车后不足 TIMER 时长）。 */
-    private fun isRideActive(): Boolean {
-        val start = prefs.getLong(KEY_RIDE_START, 0L)
-        return start > 0L && System.currentTimeMillis() - start < TIMER_MILLIS
-    }
-
     private fun showWelcome() {
         binding.title.text = "第一次使用"
         binding.subtitle.text = "点击下方按钮，按提示授予权限"
         binding.action1.text = "授权后，App 会自动执行"
         binding.action2.text = "下次点击图标即可自动运行"
         binding.statusText.text = "👆 点击按钮开始"
-    }
-
-    private fun showRideInProgress() {
-        val start = prefs.getLong(KEY_RIDE_START, 0L)
-        val remainMin = ((TIMER_MILLIS - (System.currentTimeMillis() - start)) / 60000L).coerceAtLeast(0)
-        binding.statusText.text = "🚲 骑行进行中，约剩 $remainMin 分钟\n如需重新计时请点击按钮"
     }
 
     // ============ 执行逻辑 ============
@@ -135,9 +117,6 @@ class MainActivity : AppCompatActivity() {
             binding.action1.text = "⏱  创建 50 分钟倒计时"
             binding.action2.text = "📸  打开美团扫一扫"
         }
-
-        // 记录本次骑行会话开始时间（用于防止重复发车）
-        prefs.edit().putLong(KEY_RIDE_START, System.currentTimeMillis()).apply()
 
         // ① 系统时钟（SKIP_UI，无确认弹窗）
         val skipIntent = Intent(AlarmClock.ACTION_SET_TIMER).apply {
