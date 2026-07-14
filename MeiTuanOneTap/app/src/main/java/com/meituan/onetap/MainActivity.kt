@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         private const val TIMER_MILLIS = TIMER_SECONDS * 1000L
         private const val REQ_POST_NOTIFICATIONS = 1001
         private const val MEITUAN_PACKAGE = "com.sankuai.meituan"
+        // 冷启动预热：先打开美团让进程起来，再跳转扫码，规避扫码页相机预览初始化竞态（黑屏）
+        private const val MEITUAN_WARMUP_MS = 1200L
 
         private val MEITUAN_SCHEMES = listOf(
             "imeituan://www.meituan.com/scanQRCode",
@@ -130,7 +132,7 @@ class MainActivity : AppCompatActivity() {
                 startActivity(skipIntent)
                 // 计时已启动，美团稍后异步打开 —— 先显示"即将打开"，避免误报失败
                 binding.statusText.text = "⏱ 50分钟倒计时已启动\n📸 正在打开美团…"
-                scheduleMeituan(1000) // 延后 1 秒启动美团，给系统时钟留足切换时间
+                launchMeituan() // 预热 + 跳转扫码（带延时，规避冷启动相机黑屏）
                 binding.btnStartRiding.isEnabled = true
                 return
             } catch (e: Exception) {
@@ -156,8 +158,7 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "AlarmManager failed", e)
         }
 
-        val meituanOk = openMeituan()
-        updateStatus(timerOk, meituanOk)
+        launchMeituan(timerOk)
         binding.btnStartRiding.isEnabled = true
     }
 
@@ -201,18 +202,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun scheduleMeituan(delayMs: Long) {
+    /**
+     * 打开美团扫码。
+     * 冷启动时先启动美团（预热进程），再延时跳转扫码页：让扫码活动在“热”进程中启动，
+     * 规避美团扫码页相机预览初始化竞态导致的黑屏（热进程下不出现该问题，见 DEVELOPMENT.md）。
+     */
+    private fun launchMeituan(timerOk: Boolean = true) {
+        val launchIntent = packageManager.getLaunchIntentForPackage(MEITUAN_PACKAGE)
+        if (launchIntent != null) {
+            try {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntent) // 预热：先让美团进程/首页起来
+            } catch (e: Exception) {
+                Log.w(TAG, "warm-up launch failed", e)
+            }
+        }
         handler.postDelayed({
-            val meituanOk = openMeituan()
-            updateStatus(true, meituanOk)
-        }, delayMs)
+            val meituanOk = openMeituanScan()
+            updateStatus(timerOk, meituanOk)
+        }, MEITUAN_WARMUP_MS)
     }
 
-    private fun openMeituan(): Boolean {
+    private fun openMeituanScan(): Boolean {
         for (scheme in MEITUAN_SCHEMES) {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(scheme)).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    // 仅 NEW_TASK：避免 CLEAR_TOP 在热启动时重建美团栈，导致闪屏/预览竞态
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 if (intent.resolveActivity(packageManager) != null) {
                     startActivity(intent)
@@ -225,7 +241,7 @@ class MainActivity : AppCompatActivity() {
         try {
             val intent = packageManager.getLaunchIntentForPackage(MEITUAN_PACKAGE)
             if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
                 return true
             }
