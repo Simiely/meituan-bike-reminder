@@ -1,7 +1,6 @@
 package com.meituan.onetap
 
 import android.Manifest
-import android.app.ActivityOptions
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -13,7 +12,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.StrictMode
 import android.provider.AlarmClock
 import android.provider.Settings
 import android.util.Log
@@ -44,11 +42,6 @@ class MainActivity : AppCompatActivity() {
         private const val TIMER_MILLIS = TIMER_SECONDS * 1000L
         private const val REQ_POST_NOTIFICATIONS = 1001
         private const val MEITUAN_PACKAGE = "com.sankuai.meituan"
-        // 计时与预热首页错开，避免同帧 startActivity 互相覆盖（v1.8.0 坑）
-        private const val TIMER_TO_MEITUAN_GAP_MS = 400L
-        // 预热后，由系统闹钟触发扫码 PendingIntent 前的热进程稳定时间
-        private const val MEITUAN_WARMUP_MS = 1200L
-        private const val SCAN_PENDING_REQ = 1
 
         private val MEITUAN_SCHEMES = listOf(
             "imeituan://www.meituan.com/scanQRCode",
@@ -60,21 +53,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 调试钩子：检测后台启动 Activity 被拦截。
-        // detectBlockedBackgroundActivityLaunch() 是 Android 16(API36) 才加入 StrictMode 的，
-        // 用反射调用，低版本自动跳过（低版本由系统在 Logcat tag=ActivityTaskManager 直接打印
-        // "Background activity launch blocked!"）。验证时过滤该 tag 即可确认扫码 PendingIntent 的 opt-in 是否生效。
-        try {
-            val builderCls = Class.forName("android.os.StrictMode\$VmPolicy\$Builder")
-            val builder = builderCls.getDeclaredConstructor().newInstance()
-            builderCls.getMethod("detectBlockedBackgroundActivityLaunch").invoke(builder)
-            builderCls.getMethod("penaltyLog").invoke(builder)
-            val policy = builderCls.getMethod("build").invoke(builder)
-            val vmPolicyCls = Class.forName("android.os.StrictMode\$VmPolicy")
-            StrictMode::class.java.getMethod("setVmPolicy", vmPolicyCls).invoke(null, policy)
-        } catch (e: Exception) {
-            Log.d(TAG, "StrictMode detectBlockedBackgroundActivityLaunch unavailable (<Android16)", e)
-        }
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         prefs = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -150,7 +128,9 @@ class MainActivity : AppCompatActivity() {
         if (skipIntent.resolveActivity(packageManager) != null) {
             try {
                 startActivity(skipIntent)
-                launchMeituan(true) // 预热美团 + 由系统闹钟延时拉起扫码（规避冷启动黑屏）
+                // 计时已启动，美团稍后异步打开 —— 先显示"即将打开"，避免误报失败
+                binding.statusText.text = "⏱ 50分钟倒计时已启动\n📸 正在打开美团…"
+                scheduleMeituan(1000) // 延后 1 秒启动美团，给系统时钟留足切换时间
                 binding.btnStartRiding.isEnabled = true
                 return
             } catch (e: Exception) {
@@ -176,7 +156,9 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "AlarmManager failed", e)
         }
 
-        launchMeituan(timerOk)
+        val meituanOk = openMeituan()
+        updateStatus(timerOk, meituanOk)
+        binding.btnStartRiding.isEnabled = true
     }
 
     /**
@@ -219,121 +201,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * 预热美团并延时拉起扫一扫，规避冷启动相机黑屏。
-     *
-     * 原理：
-     * 1) 先打开美团首页（不调相机），把美团进程预热为"热进程"；
-     * 2) 再由系统闹钟（AlarmManager）触发扫码的 PendingIntent。
-     *    PendingIntent 由系统调度触发，豁免 Android 10+ 后台启动限制；
-     *    此时美团已是热进程，扫码页预览 Surface 已就绪，规避冷启动黑屏竞态。
-     */
-    private fun launchMeituan(timerOk: Boolean) {
-        // ① 预热：错开计时器（TIMER_TO_MEITUAN_GAP_MS），打开美团首页，不调相机
+    private fun scheduleMeituan(delayMs: Long) {
         handler.postDelayed({
-            openMeituanHome() // 预热失败则忽略，交由下方 PendingIntent 拉起扫码
-        }, TIMER_TO_MEITUAN_GAP_MS)
-
-        // ② 预热后由系统闹钟触发扫码 PendingIntent（豁免后台启动限制）
-        val scanPi = buildScanPendingIntent()
-        val alarm = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val triggerAt = System.currentTimeMillis() + TIMER_TO_MEITUAN_GAP_MS + MEITUAN_WARMUP_MS
-        val meituanOk = MEITUAN_SCHEMES.any { scheme ->
-            Intent(Intent.ACTION_VIEW, Uri.parse(scheme)).resolveActivity(packageManager) != null
-        } || packageManager.getLaunchIntentForPackage(MEITUAN_PACKAGE) != null
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarm.canScheduleExactAlarms()) {
-                // 无精确闹钟权限：退化为非精确闹钟（仍由系统调度，豁免后台启动限制）
-                alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, scanPi)
-            } else {
-                alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, scanPi)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "scan pending alarm failed", e)
-            // 闹钟不可用：回退到直接深链（可能冷启动黑屏）
-            openMeituan()
-        }
-        updateStatus(timerOk, meituanOk)
-        binding.btnStartRiding.isEnabled = true
-    }
-
-    /**
-     * 仅打开美团首页做进程预热（不调相机，避免冷启动黑屏）。
-     * 返回是否成功拉起美团首页。
-     */
-    private fun openMeituanHome(): Boolean {
-        return try {
-            val homeIntent = packageManager.getLaunchIntentForPackage(MEITUAN_PACKAGE)?.apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            if (homeIntent != null) {
-                startActivity(homeIntent)
-                true
-            } else {
-                false
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "open meituan home failed", e)
-            false
-        }
-    }
-
-    /**
-     * 构造扫码的 PendingIntent，并显式授权后台启动 Activity。
-     *
-     * 背景：Android 10+ 限制后台 App 启动 Activity；Android 14(API34) 起发送方、
-     * Android 15(API35) 起创建方都必须显式 opt-in，否则系统会拦截（Logcat 打
-     * "Background activity launch blocked!"，不抛异常）。本 App 经 AlarmManager
-     * 触发扫码，属于"发送方=系统、创建方=本 App"的场景：
-     * - API31~34：用 [PendingIntent.FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS] 允许后台启动；
-     * - API35+：创建方需额外委托，但 compileSdk=34 无法直接引用 API35 符号，
-     *   故用反射调用 [ActivityOptions.setPendingIntentCreatorBackgroundActivityStartMode]
-     *   并传入 MODE_BACKGROUND_ACTIVITY_START_ALLOWED，调用失败则回退到 flag。
-     */
-    private fun buildScanPendingIntent(): PendingIntent {
-        val scanIntent = Intent(Intent.ACTION_VIEW, Uri.parse(MEITUAN_SCHEMES.first())).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        val opts = ActivityOptions.makeBasic()
-        // FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS = 0x01000000 (API31+)，SDK34 stub 已移除该常量，
-        // 运行时反射获取，失败则回退硬值。
-        val flagAllowBg = getPendingIntentFlagAllowBackground()
-        var flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // API 31+
-            if (Build.VERSION.SDK_INT >= 35) {
-                // API35+：创建方必须显式委托后台启动权限（compileSdk=34，反射调用）
-                try {
-                    val modeAllowed = ActivityOptions::class.java
-                        .getField("MODE_BACKGROUND_ACTIVITY_START_ALLOWED").getInt(null)
-                    ActivityOptions::class.java
-                        .getMethod(
-                            "setPendingIntentCreatorBackgroundActivityStartMode",
-                            Int::class.javaPrimitiveType
-                        )
-                        .invoke(opts, modeAllowed)
-                } catch (e: Exception) {
-                    Log.w(TAG, "setPendingIntentCreatorBackgroundActivityStartMode failed", e)
-                    flags = flags or flagAllowBg
-                }
-            } else {
-                flags = flags or flagAllowBg
-            }
-        }
-        return PendingIntent.getActivity(this, SCAN_PENDING_REQ, scanIntent, flags, opts.toBundle())
-    }
-
-    /**
-     * 运行时获取 [PendingIntent.FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS]（API31+）。
-     * 该常量在 compileSdk=34 的 stub 中已被移除，故用反射；失败回退到已知硬值 0x01000000。
-     */
-    private fun getPendingIntentFlagAllowBackground(): Int {
-        return try {
-            PendingIntent::class.java
-                .getField("FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS").getInt(null)
-        } catch (e: Exception) {
-            Log.d(TAG, "FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS not found, use fallback 0x01000000", e)
-            0x01000000
-        }
+            val meituanOk = openMeituan()
+            updateStatus(true, meituanOk)
+        }, delayMs)
     }
 
     private fun openMeituan(): Boolean {
