@@ -44,11 +44,6 @@ class MainActivity : AppCompatActivity() {
         private const val MEITUAN_PACKAGE = "com.sankuai.meituan"
         // 预热与扫码拉开间隔，避免同帧 startActivity 互相覆盖（v1.8.0 坑）
         private const val PREWARM_GAP_MS = 400L
-        // 两次扫码之间的间隔：首次投递后相机开始初始化，隔一段时间再投递第二次「重踢」，
-        // 规避冷启动/偶发相机预览黑屏；同时错开避免同帧 startActivity 互相覆盖。
-        // 取 300ms：第二次「重踢」更早发生、黑屏感知更短；且带后台授权的 PendingIntent 走 BAL 豁免通道，
-        // 不受"近期前台"宽限期约束，故 300 与更长间隔在 opt-in 生效时效果一致。
-        private const val SCAN_RETRY_GAP_MS = 300L
         // 扫码 PendingIntent 请求码（与计时兜底广播区分）
         private const val SCAN_PI_REQUEST_CODE = 7103
         // PendingIntent.FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS：SDK 31+ 引入，
@@ -214,30 +209,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 先预热美团进程，再拉起扫码（两次）—— 复刻「长按图标→扫一扫」稳定：美团热进程下相机预览不黑屏。
+     * 先预热美团进程，再拉起扫码 —— 复刻「长按图标→扫一扫」稳定：美团热进程下相机预览不黑屏。
      * - ① 预热：错开计时器（PREWARM_GAP_MS）先开美团首页让进程变热（避免 v1.8.0 同帧 startActivity 互相覆盖）
-     * - ② 拉起①：用带「后台启动授权」的 PendingIntent 拉扫码，绕过 Android 10+ 后台启动限制（BAL）。
+     * - ② 拉起：用带「后台启动授权」的 PendingIntent 拉扫码，绕过 Android 10+ 后台启动限制（BAL）。
      *        普通 startActivity 在 App 已转入后台时会被 BAL 静默拦截（点 App 内「启动」按钮时尤甚——
      *        无"刚回到前台"宽限期），故用 PendingIntent opt-in 显式授权，图标/按钮两条路径都稳。
-     * - ③ 拉起②：间隔 SCAN_RETRY_GAP_MS 再投递同 scheme，把已在前台的扫码页「重踢」一次，
-     *        相机重新初始化 → 规避偶发预览黑屏；错开避免同帧 startActivity 互相覆盖。
-     * 此刻美团已是热进程，扫码预览 Surface 已就绪 → 规避冷启动黑屏竞态。
+     *        此刻美团已是热进程，扫码预览 Surface 已就绪 → 规避冷启动黑屏竞态。
      */
     private fun scheduleMeituan(timerOk: Boolean, delayMs: Long = 1000L) {
         // ① 预热美团首页（不调相机，进程变热）
         handler.postDelayed({
             openMeituanHome()
         }, (delayMs - PREWARM_GAP_MS).coerceAtLeast(0))
-        // ② 预热后，第一次用带后台启动授权的 PendingIntent 拉起扫码（绕过 BAL）
+        // ② 预热后，用带后台启动授权的 PendingIntent 拉起扫码（绕过 BAL）
         handler.postDelayed({
-            val meituanOk = launchScanWithBackgroundOptIn(1)
+            val meituanOk = launchScanWithBackgroundOptIn()
             updateStatus(timerOk, meituanOk)
-        }, delayMs)
-        // ③ 第二次拉起扫码：同 scheme 再次投递，重踢相机初始化，规避偶发黑屏
-        handler.postDelayed({
-            launchScanWithBackgroundOptIn(2)
             binding.btnStartRiding.isEnabled = true
-        }, delayMs + SCAN_RETRY_GAP_MS)
+        }, delayMs)
     }
 
     private fun openMeituan(): Boolean {
@@ -295,11 +284,9 @@ class MainActivity : AppCompatActivity() {
      * 显式给 PendingIntent 授权后台启动（FLAG + API34 发送方 ActivityOptions + API35 创建方 mode），
      * 即可绕过 BAL，无论本 App 是否在前台都能拉起扫码。失败则回退普通 startActivity。
      *
-     * @param attempt 第几次投递（1=首次，2=重踢）。每次用独立 requestCode，确保两次 PendingIntent 不合并、
-     *                都能真正投递出去，从而第二次把已在前台的扫码页"重踢"一次、相机重新初始化。
      * @return 是否成功发出扫码拉起（true 不代表美团一定已渲染扫码页，仅代表 intent 已投递）
      */
-    private fun launchScanWithBackgroundOptIn(attempt: Int): Boolean {
+    private fun launchScanWithBackgroundOptIn(): Boolean {
         // 选第一个可解析的扫码 scheme
         val scheme = MEITUAN_SCHEMES.firstOrNull { s ->
             try {
@@ -312,7 +299,7 @@ class MainActivity : AppCompatActivity() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
             val pi = PendingIntent.getActivity(
-                this, SCAN_PI_REQUEST_CODE + attempt, scanIntent, buildScanPendingIntentFlags()
+                this, SCAN_PI_REQUEST_CODE, scanIntent, buildScanPendingIntentFlags()
             )
             applyCreatorBackgroundStartMode(pi) // API 35 创建方授权
             val opts = buildSenderBackgroundStartOptions() // API 34 发送方授权
@@ -323,10 +310,10 @@ class MainActivity : AppCompatActivity() {
             } else {
                 pi.send()
             }
-            Log.d(TAG, "scan launched via opt-in PendingIntent (attempt=$attempt): $scheme")
+            Log.d(TAG, "scan launched via opt-in PendingIntent: $scheme")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "opt-in PendingIntent failed (attempt=$attempt), fallback to direct start", e)
+            Log.e(TAG, "opt-in PendingIntent failed, fallback to direct start", e)
             openMeituan() // 兜底：图标冷启动路径在宽限期内仍可成功
         }
     }
