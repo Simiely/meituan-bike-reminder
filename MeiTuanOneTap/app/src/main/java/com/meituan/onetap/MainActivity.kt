@@ -46,7 +46,9 @@ class MainActivity : AppCompatActivity() {
         private const val PREWARM_GAP_MS = 400L
         // 两次扫码之间的间隔：首次投递后相机开始初始化，隔一段时间再投递第二次「重踢」，
         // 规避冷启动/偶发相机预览黑屏；同时错开避免同帧 startActivity 互相覆盖。
-        private const val SCAN_RETRY_GAP_MS = 700L
+        // 取 300ms：第二次「重踢」更早发生、黑屏感知更短；且带后台授权的 PendingIntent 走 BAL 豁免通道，
+        // 不受"近期前台"宽限期约束，故 300 与更长间隔在 opt-in 生效时效果一致。
+        private const val SCAN_RETRY_GAP_MS = 300L
         // 扫码 PendingIntent 请求码（与计时兜底广播区分）
         private const val SCAN_PI_REQUEST_CODE = 7103
         // PendingIntent.FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS：SDK 31+ 引入，

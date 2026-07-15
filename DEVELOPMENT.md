@@ -143,7 +143,7 @@ imeituan://platformapi/startapp         ← 平台入口兜底
 
 - 按钮下移避免贴顶，底部开源信息位置不变。
 - **修复「点 App 内『启动』按钮只拉起美团首页、不弹扫码」**：扫码拉起从普通 `startActivity` 改为带「后台启动授权」的 `PendingIntent`（FLAG + API34 发送方 ActivityOptions + API35 创建方 mode），绕过 Android 10+ 后台启动限制（BAL）。图标冷启动本就有「刚回前台」宽限期、能拉起；按钮路径 App 已转后台、无宽限期才暴露该问题。保留美团首页预热（热进程避黑屏），扫码失败回退普通直启。
-- **扫码拉起改为连续两次（间隔 `SCAN_RETRY_GAP_MS=700ms`）**：第二次把已在前台的扫码页「重踢」、相机重新初始化，进一步规避偶发预览黑屏；两次均走带后台授权的 `PendingIntent`、且用独立 `requestCode` 互不合并、都真正投递。
+- **扫码拉起改为连续两次（间隔 `SCAN_RETRY_GAP_MS=300ms`）**：第二次把已在前台的扫码页「重踢」、相机重新初始化，进一步规避偶发预览黑屏；两次均走带后台授权的 `PendingIntent`、且用独立 `requestCode` 互不合并、都真正投递。
 - 回退点：本提交（含此前 `7d5dca7` 预热版）；如需回退到「只拉起首页/偶发黑屏」的稳定态，可 checkout `d616911`。
 
 ### v2.7.0 — 首页底部增加开源信息
@@ -170,7 +170,7 @@ App 名从「一键骑车」改为「扫完记得还」。文案同步优化。
 > **解法（v2.7.1 已落地）：先拉起美团首页进程「预热」（不调相机，错开 400ms），再用带「后台启动授权」的 `PendingIntent` 拉起扫码。**
 > - 预热让美团变热进程 → 规避冷启动黑屏竞态（复刻「长按图标→扫一扫」稳定的本质：美团热进程）。
 > - 第二步**必须**用 `PendingIntent` 显式授权后台启动，否则本 App 被预热顶到后台后，普通 `startActivity` 会被 BAL 静默拦截、扫码页永远不弹。
-> - 扫码投递**两次**（间隔 `SCAN_RETRY_GAP_MS=700ms`）：首次拉起，第二次把已在前台的扫码页「重踢」一次、相机重新初始化，规避偶发预览黑屏；两次用独立 `requestCode` 的 `PendingIntent` 确保都真正投递、互不合并。
+> - 扫码投递**两次**（间隔 `SCAN_RETRY_GAP_MS=300ms`）：首次拉起，第二次把已在前台的扫码页「重踢」一次、相机重新初始化，规避偶发预览黑屏；两次用独立 `requestCode` 的 `PendingIntent` 确保都真正投递、互不合并。带后台授权的 `PendingIntent` 走 BAL 豁免通道，不受"近期前台"宽限期约束，故间隔长短在 opt-in 生效时不影响触发。
 >   - API 31+：`FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS`（compileSdk=34 的 stub 已移除该常量 → 反射读取 + 硬编码 `0x01000000` 回退）；
 >   - API 34（发送方）：`ActivityOptions.setPendingIntentBackgroundActivityStartMode(MODE_BACKGROUND_ACTIVITY_START_ALLOWED)`；
 >   - API 35（创建方）：`PendingIntent.setPendingIntentCreatorBackgroundActivityStartMode(MODE_BACKGROUND_ACTIVITY_START_ALLOWED)`。
