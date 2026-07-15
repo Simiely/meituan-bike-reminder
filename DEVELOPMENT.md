@@ -139,9 +139,11 @@ imeituan://platformapi/startapp         ← 平台入口兜底
 - 删除死代码设置面板与 `settings_bg.xml`；清理内部草稿文档；CI 权限下放到 job 级。
 - **部署注意**：旧签名密钥已作废，重新部署必须用 `keytool` 生成自己的密钥（见 README「自己部署」与本文「签名配置」）。
 
-### v2.7.1 — 按钮位置调整
+### v2.7.1 — 按钮位置调整 + 修复按钮路径扫码被 BAL 拦截
 
-按钮下移避免贴顶，底部开源信息位置不变。
+- 按钮下移避免贴顶，底部开源信息位置不变。
+- **修复「点 App 内『启动』按钮只拉起美团首页、不弹扫码」**：扫码拉起从普通 `startActivity` 改为带「后台启动授权」的 `PendingIntent`（FLAG + API34 发送方 ActivityOptions + API35 创建方 mode），绕过 Android 10+ 后台启动限制（BAL）。图标冷启动本就有「刚回前台」宽限期、能拉起；按钮路径 App 已转后台、无宽限期才暴露该问题。保留美团首页预热（热进程避黑屏），扫码失败回退普通直启。
+- 回退点：本提交（含此前 `7d5dca7` 预热版）；如需回退到「只拉起首页/偶发黑屏」的稳定态，可 checkout `d616911`。
 
 ### v2.7.0 — 首页底部增加开源信息
 
@@ -159,13 +161,18 @@ App 名从「一键骑车」改为「扫完记得还」。文案同步优化。
 
 删除自适应图标 XML，仅保留 PNG。之前折腾了三次都没成功——`@color/transparent` 不是 drawable、双图叠加、空 layer-list 在某些 ROM 上不工作。最朴素的 PNG 反而是最可靠的。
 
-### 冷启动美团扫一扫黑屏（边界已查清，未彻底解决）
+### 冷启动美团扫一扫黑屏（已用「预热 + PendingIntent 授权」解决）
 
 > **现象：美团不在后台（冷启动）时，自动打开扫码页相机预览概率性黑屏，但能正常扫码。**
 > **关键判断：黑屏却仍能解码 = 相机在采帧、预览 Surface 没渲染 → 预览渲染问题，非相机采集问题。**
 > **根因：美团扫码活动在“冷进程”里 `camera.open` 早于预览 `Surface` 就绪，竞态导致黑屏；热进程（已在后台）下不出现。美团代码改不了。**
-> **启动器侧踩过的失败路径（重要，避免再踩）：想“先打开美团预热进程、再跳扫码”来复现热进程路径，但 ——① 与计时器 `startActivity` 同帧会互相覆盖、把计时器顶掉（v1.8.0 同款坑）；② 预热把本 App 压到后台后，延时再 `startActivity` 拉相机页会被 Android 10+ 后台启动限制直接拦截（"Background activity start was blocked"），扫码页永远不弹。故“预热+再拉起”在纯启动器里行不通。**
-> **唯一 OS 合规的修复方向：用 `PendingIntent`（经 AlarmManager 触发）延时拉起扫码——PendingIntent 豁免后台启动限制，且预热后美团已是热进程。属实验性改动，需真机验证，未在 v2.7.1 落地。**
+> **解法（v2.7.1 已落地）：先拉起美团首页进程「预热」（不调相机，错开 400ms），再用带「后台启动授权」的 `PendingIntent` 拉起扫码。**
+> - 预热让美团变热进程 → 规避冷启动黑屏竞态（复刻「长按图标→扫一扫」稳定的本质：美团热进程）。
+> - 第二步**必须**用 `PendingIntent` 显式授权后台启动，否则本 App 被预热顶到后台后，普通 `startActivity` 会被 BAL 静默拦截、扫码页永远不弹。
+>   - API 31+：`FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS`（compileSdk=34 的 stub 已移除该常量 → 反射读取 + 硬编码 `0x01000000` 回退）；
+>   - API 34（发送方）：`ActivityOptions.setPendingIntentBackgroundActivityStartMode(MODE_BACKGROUND_ACTIVITY_START_ALLOWED)`；
+>   - API 35（创建方）：`PendingIntent.setPendingIntentCreatorBackgroundActivityStartMode(MODE_BACKGROUND_ACTIVITY_START_ALLOWED)`。
+> **坑（曾踩，已修）：第二步若用普通 `startActivity` —— 图标冷启动能拉起（有系统“刚回到前台”宽限期），但 App 内「启动」按钮只拉起美团首页、不弹扫码（App 已在后台、无宽限期、被 BAL 吞掉）。这是 v2.7.1 按钮路径修复的关键。**
 
 ### v2.4.0 — 图标替换 + 配色 + 签名
 

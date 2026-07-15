@@ -44,6 +44,13 @@ class MainActivity : AppCompatActivity() {
         private const val MEITUAN_PACKAGE = "com.sankuai.meituan"
         // 预热与扫码拉开间隔，避免同帧 startActivity 互相覆盖（v1.8.0 坑）
         private const val PREWARM_GAP_MS = 400L
+        // 扫码 PendingIntent 请求码（与计时兜底广播区分）
+        private const val SCAN_PI_REQUEST_CODE = 7103
+        // PendingIntent.FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS：SDK 31+ 引入，
+        // 但 compileSdk=34 的 stub 已移除该常量 → 硬编码回退值。
+        private const val FLAG_ALLOW_BG_ACTIVITY_STARTS = 0x01000000
+        // ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED = 1
+        private const val MODE_BG_ACTIVITY_START_ALLOWED = 1
 
         private val MEITUAN_SCHEMES = listOf(
             "imeituan://www.meituan.com/scanQRCode",
@@ -204,17 +211,19 @@ class MainActivity : AppCompatActivity() {
     /**
      * 先预热美团进程，再拉起扫码 —— 复刻「长按图标→扫一扫」稳定：美团热进程下相机预览不黑屏。
      * - ① 预热：错开计时器（PREWARM_GAP_MS）先开美团首页让进程变热（避免 v1.8.0 同帧 startActivity 互相覆盖）
-     * - ② 拉起：沿用可靠的后台延时拉起（设备后台启动宽限期内可拉起），
-     *        此刻美团已是热进程，扫码预览 Surface 已就绪 → 规避冷启动黑屏竞态
+     * - ② 拉起：用带「后台启动授权」的 PendingIntent 拉扫码，绕过 Android 10+ 后台启动限制（BAL）。
+     *        普通 startActivity 在 App 已转入后台时会被 BAL 静默拦截（点 App 内「启动」按钮时尤甚——
+     *        无"刚回到前台"宽限期），故用 PendingIntent opt-in 显式授权，图标/按钮两条路径都稳。
+     *        此刻美团已是热进程，扫码预览 Surface 已就绪 → 规避冷启动黑屏竞态。
      */
     private fun scheduleMeituan(timerOk: Boolean, delayMs: Long = 1000L) {
         // ① 预热美团首页（不调相机，进程变热）
         handler.postDelayed({
             openMeituanHome()
         }, (delayMs - PREWARM_GAP_MS).coerceAtLeast(0))
-        // ② 预热后拉起扫码
+        // ② 预热后，用带后台启动授权的 PendingIntent 拉起扫码（绕过 BAL）
         handler.postDelayed({
-            val meituanOk = openMeituan()
+            val meituanOk = launchScanWithBackgroundOptIn()
             updateStatus(timerOk, meituanOk)
             binding.btnStartRiding.isEnabled = true
         }, delayMs)
@@ -265,6 +274,93 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "open meituan home failed", e)
             false
         }
+    }
+
+    /**
+     * 用带「后台启动授权」的 PendingIntent 拉起美团扫码。
+     *
+     * 关键：本 App 在「预热美团首页」后已转入后台，普通 startActivity 会被 Android 10+ 的
+     * 后台启动限制（BAL）静默拦截——点 App 内「启动」按钮时尤其明显（无"刚回到前台"宽限期）。
+     * 显式给 PendingIntent 授权后台启动（FLAG + API34 发送方 ActivityOptions + API35 创建方 mode），
+     * 即可绕过 BAL，无论本 App 是否在前台都能拉起扫码。失败则回退普通 startActivity。
+     *
+     * @return 是否成功发出扫码拉起（true 不代表美团一定已渲染扫码页，仅代表 intent 已投递）
+     */
+    private fun launchScanWithBackgroundOptIn(): Boolean {
+        // 选第一个可解析的扫码 scheme
+        val scheme = MEITUAN_SCHEMES.firstOrNull { s ->
+            try {
+                Intent(Intent.ACTION_VIEW, Uri.parse(s)).resolveActivity(packageManager) != null
+            } catch (_: Exception) { false }
+        } ?: return openMeituan() // 全不可解析 → 走普通兜底（含下载引导）
+
+        return try {
+            val scanIntent = Intent(Intent.ACTION_VIEW, Uri.parse(scheme)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            val pi = PendingIntent.getActivity(
+                this, SCAN_PI_REQUEST_CODE, scanIntent, buildScanPendingIntentFlags()
+            )
+            applyCreatorBackgroundStartMode(pi) // API 35 创建方授权
+            val opts = buildSenderBackgroundStartOptions() // API 34 发送方授权
+            if (opts != null) {
+                // 用自 API 23 起稳定的 7 参重载：6th=requiredPermission(null)，7th=options(Bundle)。
+                // 避免 6 参 (Context,int,Intent,OnFinished,Handler,Bundle) 在 compileSdk=34 stub 中的重载歧义。
+                pi.send(applicationContext, 0, null, null, null, null as String?, opts)
+            } else {
+                pi.send()
+            }
+            Log.d(TAG, "scan launched via opt-in PendingIntent: $scheme")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "opt-in PendingIntent failed, fallback to direct start", e)
+            openMeituan() // 兜底：图标冷启动路径在宽限期内仍可成功
+        }
+    }
+
+    /**
+     * 构造扫码 PendingIntent 的 flags：
+     * FLAG_UPDATE_CURRENT | FLAG_IMMUTABLE | FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS。
+     * 其中后台启动 flag 在 compileSdk=34 的 stub 中已被移除，故用反射读取、失败回退硬编码值。
+     */
+    private fun buildScanPendingIntentFlags(): Int {
+        val bgFlag = runCatching {
+            PendingIntent::class.java
+                .getField("FLAG_ALLOW_BACKGROUND_ACTIVITY_STARTS")
+                .getInt(null)
+        }.getOrDefault(FLAG_ALLOW_BG_ACTIVITY_STARTS)
+        return PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE or bgFlag
+    }
+
+    /**
+     * API 35：设置 PendingIntent 创建方后台启动模式为允许（setPendingIntentCreatorBackgroundActivityStartMode）。
+     * 低于 API 35 该方法不存在，直接跳过。
+     */
+    private fun applyCreatorBackgroundStartMode(pi: PendingIntent) {
+        if (Build.VERSION.SDK_INT < 35) return
+        runCatching {
+            val method = PendingIntent::class.java.getMethod(
+                "setPendingIntentCreatorBackgroundActivityStartMode", Int::class.javaPrimitiveType
+            )
+            method.invoke(pi, MODE_BG_ACTIVITY_START_ALLOWED)
+        }.onFailure { Log.w(TAG, "setPendingIntentCreatorBackgroundActivityStartMode unavailable", it) }
+    }
+
+    /**
+     * API 34：构造带后台启动授权的发送方 ActivityOptions（setPendingIntentBackgroundActivityStartMode）。
+     * 低于 API 34 返回 null（用 FLAG 即可）。反射获取以兼容低版本运行时不抛 NoSuchMethodError。
+     */
+    private fun buildSenderBackgroundStartOptions(): android.os.Bundle? {
+        if (Build.VERSION.SDK_INT < 34) return null
+        return runCatching {
+            val optionsClass = Class.forName("android.app.ActivityOptions")
+            val method = optionsClass.getMethod(
+                "setPendingIntentBackgroundActivityStartMode", Int::class.javaPrimitiveType
+            )
+            val opts = method.invoke(null, MODE_BG_ACTIVITY_START_ALLOWED)
+            (opts as android.app.ActivityOptions).toBundle()
+        }.onFailure { Log.w(TAG, "setPendingIntentBackgroundActivityStartMode unavailable", it) }
+            .getOrNull()
     }
 
     private fun downloadMeituan() {
