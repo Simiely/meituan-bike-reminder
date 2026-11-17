@@ -2,6 +2,15 @@
 
 > 按版本从新到旧。完整问题记录见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
+## 文档维护 · 2026-11-17
+
+- 接入 knowledge-base 的**单项目规范**（spec 2.1.3 / repo-kit 2.7.2，profile `link-only`）
+- 新增 `schema/taxonomy.json`、`tools/repo-kit/`、`tools/update-repo-kit.ps1`、`schema/kit.lock.json` 与 CI
+- 只查链接与入口，**不要求 frontmatter**
+- 6 个相对链接纳入检查
+- `DEVELOPMENT.md` 312 行超出规范 200 行拆分阈值，拆分另行处理
+- 验收：`REPO CHECK: PASS`（ERROR=0）、`KIT LOCK: PASS (v2.7.2, spec=2.1.3)`
+
 ## v2.7.2 — 安全与鲁棒性审计整改
 
 - 签名密钥从仓库与 git 历史彻底清除（`git filter-repo`），改为 keystore.properties / 环境变量注入；明文密码删除
